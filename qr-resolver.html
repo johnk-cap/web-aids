@@ -10,7 +10,13 @@
               document.write("<h1>please standby</h1>");
               break;
             case "ms":
-              document.write("<h1>you will be prompted to<br>login to your CAWG email</h1>");
+              document.write("<h1>you may be asked to<br>login to your CAWG email</h1>");
+              await new Promise(r => setTimeout(r, 8));
+              break;
+            case "es":
+              document.write("<h1>you MUST be<br>logged into eServices<br>to continue<hr></h1>");
+              document.write("<button id="go">OK I am ready!</button>");
+              await new Promise(r => setTimeout(r, 8));
               break;
           }
         }
