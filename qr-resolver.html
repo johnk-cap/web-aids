@@ -2,9 +2,16 @@
 <!-- 1LT John Kennedy, Jan2025 -->
 <html>
   <body>
-    <h1>you must have javascript enabled for this to work</h1>
+    <h2>javascript must be enabled for this to work</h2>
     	<script type="text/javascript">
-        window.location.href = "https://www.gocivilairpatrol.com/media/cms/P_6012_9_May_2022_BC6D8B252C3FA.pdf"; 
+        document.write"<h1>please standby</h1>";
+        let docCall = window.location.search;
+        let itemNum = docCall.substring(6,8);
+        if (itemNum == "01") {
+          window.location.href = "https://www.gocivilairpatrol.com/media/cms/P_6012_9_May_2022_BC6D8B252C3FA.pdf";
+        } else {
+          window.location.href = "https://www.gocivilairpatrol.com/media/cms/P_6011_919C5849F2A2E.pdf";
+        }
       </script>
   </body>
 </html>
