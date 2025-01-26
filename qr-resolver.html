@@ -4,6 +4,9 @@
   <body>
     <center><h2><br>javascript must be enabled for this to work<br><hr></h2>
     	<script type="text/javascript">
+        function sleeper(scs) {
+          await new Promise(r => setTimeout(r, scs));
+        }
         function notice(kind) {
           switch(kind) {
             case "thru":
@@ -11,12 +14,12 @@
               break;
             case "ms":
               document.write("<h1>you may be asked to<br>login to your CAWG email</h1>");
-              await new Promise(r => setTimeout(r, 8));
+              sleeper(8);
               break;
             case "es":
               document.write("<h1>you MUST be<br>logged into eServices<br>to continue<hr></h1>");
               document.write("<button id="go">OK I am ready!</button>");
-              await new Promise(r => setTimeout(r, 8));
+              sleeper(8);
               break;
           }
         }
