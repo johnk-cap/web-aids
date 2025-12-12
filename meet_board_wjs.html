@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometric Dashboard (Finalized Layout & Data Ready)</title>
+
+    <style>
+        /* Palatte Definitions */
+        :root {
+            --dark-bg: #141414;
+            --earthtone-primary: #a0522d; /* Sienna Brown (Left Panel) */
+            --earthtone-secondary: #c2b280; /* Desert Khaki/Gold (Bottom Right) */
+            --earthtone-yellow-light: #f1c40f; 
+            --earthtone-yellow-dark: #b8860b;
+            --white-panel: #ffffff;
+            --text-dark: #1e1e1e;
+            --text-light: #f5f5f5;
+            --border-radius-size: 15px;
+            --gutter: 7px;
+        }
+
+        /* Base and Widescreen Body */
+        body.dark-background {
+            margin: 0; padding: 0; height: 100vh; display: flex;
+            justify-content: center; align-items: center;
+            background-color: var(--dark-bg); color: var(--text-light);
+            font-family: Arial, sans-serif; overflow: hidden;
+        }
+
+        /* Widescreen Aspect Ratio Container (16:9) */
+        .widescreen-container {
+            width: 90vw; max-height: 50.625vw; min-height: 550px; 
+            background-color: var(--dark-bg); border-radius: var(--border-radius-size);
+            padding: var(--gutter);
+        }
+
+        /* Core Geometric Layout (1 large box left, 3 small boxes right) */
+        .geometric-layout {
+            height: 100%; display: grid; grid-template-columns: 1fr 1fr; 
+            gap: var(--gutter);
+        }
+
+        /* General Card Styling */
+        .card {
+            padding: var(--gutter); border-radius: var(--border-radius-size); 
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        /* LEFT HALF: Schedule Panel */
+        .large-panel {
+            grid-row: 1 / span 1; background-color: var(--earthtone-primary);
+            display: block; text-align: left; overflow-y: auto; 
+        }
+        .schedule-list {
+            list-style: none; padding: 0; margin: 5px 0 0 0;
+        }
+        .schedule-list li {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 5px 0; border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+            font-size: 1.0em;
+        }
+        .time-stamp {
+            font-weight: bold; color: var(--earthtone-accent); min-width: 60px;
+        }
+        .activity-text {
+            flex-grow: 1; padding-left: var(--gutter);
+        }
+
+        /* RIGHT HALF: FIXED GRID STRUCTURE */
+        .right-column {
+            display: grid; grid-template-rows: 1fr auto; gap: var(--gutter);
+        }
+        .top-right-panels {
+            display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter);
+        }
+
+        /* Top Right Pane 1: Activity Log (White) */
+        #activity-log {
+            background-color: var(--earthtone-yellow-light); color: var(--text-dark);
+        }
+
+        /* Top Right Pane 2: Graphic Placeholder (White, NO TEXT) */
+        #risk-assessment {
+            background-color: var(--white-panel); color: var(--text-dark);
+            padding: var(--gutter); display: flex; justify-content: center;
+            align-items: center; flex-direction: column; 
+        }
+        .graphic-placeholder {
+            width: 200px; height: 250px; background-color: #d1d1d1;
+            border: 1px solid #999; border-radius: 5px; display: flex;
+            justify-content: center; align-items: center; font-size: 0.8em;
+            color: #555; text-align: center; line-height: 1.2;
+            word-wrap: break-word;
+        }
+
+        /* Bottom Right Box */
+        .wide-right-bottom {
+            background-color: var(--earthtone-secondary); color: var(--text-dark);
+        }
+
+        /* Text and Title Styles */
+        h2, h3 {
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1); padding-bottom: 5px; 
+            color: var(--text-light); margin-top: 0; margin-bottom: 5px;
+        }
+        .large-panel h2 { color: var(--text-light); border-bottom-color: rgba(255, 255, 255, 0.2); }
+        #activity-log h3, .wide-right-bottom h3 {
+             color: var(--text-dark); border-bottom-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* List Formatting (Right Panels) */
+        #activity-list, #action-items ol { padding-left: 10px; }
+        #activity-list li, #action-items li {
+            margin-bottom: 5px; line-height: 1.3; font-size: 0.9em;
+            color: var(--text-dark);
+        }
+    </style>
+</head>
+<body class="dark-background">
+    
+    <main class="widescreen-container">
+        <div class="geometric-layout">
+            
+            <section id="kpi-panel" class="card large-panel">
+                <h2>Meeting Schedule (1900 - 2145)</h2>
+                
+                <ul class="schedule-list" id="schedule-list">
+                    <li><span class="time-stamp">Loading...</span> <span class="activity-text">Waiting for data feed.</span></li>
+                </ul>
+
+            </section>
+
+            <div class="right-column">
+                
+                <div class="top-right-panels">
+                    <section id="activity-log" class="card small-panel">
+                        <h2>CADETS</h2>
+                        <ul id="activity-list">
+                            <li>**Loading:** Awaiting activity records...</li>
+                        </ul>
+                        <p>
+		             <h2><strong id="soonestMondayDate"></strong></h2> <hr>
+                             (<span id="mondayOccurrence"></span>)
+                        </p>
+                    </section>
+
+                    <section id="risk-assessment" class="card small-panel">
+                            <img href="https://cawg.cap.gov/media/cms/CAWG_Logo__New_56B9CB80AED38.png" height=250 width=200></image>
+                    </section>
+                </div>
+
+                <section id="action-items" class="card small-panel wide-right-bottom">
+                    <h3>&#x25A0; Next Action Items (Q4 Focus)</h3>
+                    <ol id="action-items-list">
+                        <li>Loading action items...</li>
+                    </ol>
+                </section>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // NOTE: These URLs assume your local server is running a proxy 
+            // that handles the Google Sheet query logic (gviz/tq) and returns clean JSON.
+            const PROXY_URLS = {
+                schedule: '/api/sheet-data/schedule',
+                activity: '/api/sheet-data/activity',
+                actions: '/api/sheet-data/actions'
+            };
+
+            // --- Panel Element References ---
+            const scheduleList = document.getElementById('schedule-list');
+            const activityList = document.getElementById('activity-list');
+            const actionList = document.getElementById('action-items-list');
+
+            // --- Generic Fetch Function for Proxy Endpoints ---
+            const fetchData = async (endpoint, listElement, transformFunction) => {
+                try {
+                    // Placeholder message during fetch
+                    listElement.innerHTML = `<li>Fetching data from ${endpoint}...</li>`;
+
+                    const response = await fetch(endpoint);
+                    if (!response.ok) {
+                        throw new Error(`Proxy error! Status: ${response.status} from ${endpoint}`);
+                    }
+                    const data = await response.json();
+                    
+                    // Clear previous content
+                    listElement.innerHTML = ''; 
+
+                    // Apply the specific rendering function for this panel
+                    transformFunction(data, listElement);
+
+                } catch (error) {
+                    console.error('Data Load Error:', error);
+                    listElement.innerHTML = `<li>ERROR loading data: ${error.message}</li>`;
+                }
+            };
+
+            // --- 1. Schedule Panel Renderer ---
+            // Assumed Proxy JSON format for Schedule: [{time: "19:00", text: "Welcome..."}, ...]
+            const renderSchedule = (data, element) => {
+                if (data.length === 0) {
+                    element.innerHTML = '<li>No schedule items found.</li>';
+                    return;
+                }
+                data.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span class="time-stamp">${item.time}</span> <span class="activity-text">${item.text}</span>`;
+                    element.appendChild(li);
+                });
+            };
+
+            // --- 2. Activity Log Renderer ---
+            // Assumed Proxy JSON format for Activity: [{time: "14:30", text: "Commits merged..."}, ...]
+            const renderActivity = (data, element) => {
+                if (data.length === 0) {
+                    element.innerHTML = '<li>No recent activity found.</li>';
+                    return;
+                }
+                data.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<li>**${item.time}:** ${item.text}</li>`;
+                    element.appendChild(li);
+                });
+            };
+
+            // --- 3. Action Items Renderer ---
+            // Assumed Proxy JSON format for Actions: [{text: "Finalize vendor selection..."}, ...]
+            const renderActions = (data, element) => {
+                if (data.length === 0) {
+                    element.innerHTML = '<li>No open action items found.</li>';
+                    return;
+                }
+                // The Action Items panel uses an <ol> (ordered list)
+                data.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item.text;
+                    element.appendChild(li);
+                });
+            };
+
+            // --- Execute all fetches on load ---
+            fetchData(PROXY_URLS.schedule, scheduleList, renderSchedule);
+            fetchData(PROXY_URLS.activity, activityList, renderActivity);
+            fetchData(PROXY_URLS.actions, actionList, renderActions);
+
+        });
+
+        // Helper function to format the occurrence number (e.g., 1 -> 1st, 2 -> 2nd)
+        function formatOrdinal(n) {
+            const s = ["th", "st", "nd", "rd"];
+            const v = n % 100;
+            return n + (s[(v - 20) % 10] || s[v] || s[0]);
+        }
+
+        // Main function to calculate and display the date and occurrence
+        function getSoonestMondayExtended() {
+            // Array of three-letter month abbreviations (0=Jan, 1=Feb, etc.)
+            const monthNames = [
+                "JAN", "FEB", "MAR", "APR", "MAY", "JUN", 
+                "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+            ];
+
+            // 1. Calculate the date of the soonest Monday
+            const today = new Date();
+            const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday
+            
+            // Calculate how many days we need to advance to reach Monday (Day 1)
+            const daysUntilMonday = (1 - currentDay + 7) % 7; 
+            
+            const soonestMonday = new Date(today);
+            soonestMonday.setDate(today.getDate() + daysUntilMonday);
+
+            // 2. Determine the occurrence number (e.g., 1st, 2nd, 3rd)
+            
+            // The occurrence number is determined by which week of the month the date falls in.
+            // We find the week number by taking the day of the month, subtracting 1, and dividing by 7.
+            // Math.floor((1 - 1) / 7) + 1 = 1st
+            // Math.floor((8 - 1) / 7) + 1 = 2nd
+            const dayOfMonth = soonestMonday.getDate();
+            const occurrenceNumber = Math.floor((dayOfMonth - 1) / 7) + 1;
+            
+            // Format the number to include "st", "nd", "rd", or "th"
+            const formattedOccurrence = formatOrdinal(occurrenceNumber) + " Monday";
+
+            // 3. Format the date as 'DD MMM YYYY' (US Military)
+            const day = soonestMonday.getDate().toString().padStart(2, '0');
+            const monthIndex = soonestMonday.getMonth();
+            const month = monthNames[monthIndex];
+            const year = soonestMonday.getFullYear();
+
+            const formattedDate = `${day} ${month} ${year}`;
+
+            // 4. Output the results to the HTML elements
+            document.getElementById('soonestMondayDate').textContent = formattedDate;
+            document.getElementById('mondayOccurrence').textContent = formattedOccurrence;
+        }
+
+        // Execute the function when the script loads
+        getSoonestMondayExtended();
+
+    </script>
+</body>
+</html>
