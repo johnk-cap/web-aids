@@ -231,14 +231,24 @@
                 }
             };
 
-            // --- 1. Schedule Panel Renderer ---
+            // --- 1. Schedule Panel Renderer (MODIFIED) ---
             // Expected Row Data: [Time (Col 0), Text (Col 1)]
             const renderSchedule = (rows, element) => {
-                if (rows.length === 0) {
-                    element.innerHTML = '<li>No schedule items found.</li>';
+                // Indices for Sheet Rows 3, 4, 7, and 8
+                const indicesToKeep = [2, 3, 6, 7];
+                
+                // Filter the rows based on the required indices
+                const filteredRows = indicesToKeep
+                    .map(index => rows[index])
+                    // Only keep rows that actually exist and have at least one non-null value
+                    .filter(row => row && (row[0] || row[1])); 
+
+                if (filteredRows.length === 0) {
+                    element.innerHTML = '<li>No matching schedule items found within the specified rows.</li>';
                     return;
                 }
-                rows.forEach(item => {
+
+                filteredRows.forEach(item => {
                     // DECODE all relevant text fields
                     const time = dec(item[0]) || 'N/A';
                     const text = dec(item[1]) || 'No description';
