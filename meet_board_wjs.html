@@ -162,15 +162,14 @@
 
             // Data source mappings: [GID, Column Count]
             const DATA_SOURCES = {
-                // Assuming GIDs remain correct for their respective tabs
-                schedule: { gid: '1034767002', colCount: 2 },
-                activity: { gid: '1138531778', colCount: 2 }, // Still fetches 2 columns, but only uses the second one
+                // SCHEDULE CHANGE: colCount increased to 4 (A, B, C, D) to fetch column D data
+                schedule: { gid: '1034767002', colCount: 4 }, 
+                activity: { gid: '1138531778', colCount: 2 }, 
                 actions: { gid: '1970258165', colCount: 1 }    
             };
 
             // --- Panel Element References ---
             const scheduleList = document.getElementById('schedule-list');
-            // This ID remains consistent with the HTML, but its function has changed
             const uniformDisplayElement = document.getElementById('activity-list');
             const actionList = document.getElementById('action-items-list');
 
@@ -197,6 +196,7 @@
             // --- Universal Fetch and CSV Parser Function ---
             const fetchAndRenderCSV = async (source, listElement, transformFunction) => {
                 const endpoint = buildPublicFeedUrl(source);
+                // Ensure we get enough columns for the request source
                 const { colCount } = DATA_SOURCES[source];
                 try {
                     listElement.innerHTML = `<li>Fetching data for ${source} via public feed...</li>`;
@@ -216,6 +216,7 @@
                         .filter(line => line) // Remove empty lines
                         .map(line => {
                             // Simple split by comma, works for basic text.
+                            // Limit to the requested column count.
                             return line.split(',').slice(0, colCount).map(cell => cell.trim().replace(/^"|"$/g, ''));
                         });
 
@@ -232,16 +233,17 @@
                 }
             };
 
-            // --- 1. Schedule Panel Renderer ---
+            // --- 1. Schedule Panel Renderer (MODIFIED) ---
+            // Now fetching Column A (index 0) and Column D (index 3)
             const renderSchedule = (rows, element) => {
-                // Indices for Sheet Rows 3, 4, 7, and 8
-                const indicesToKeep = [2, 3, 6, 7];
+                // Indices for Sheet Rows 3, 4, 5, and 6
+                const indicesToKeep = [2, 3, 4, 5];
                 
                 // Filter the rows based on the required indices
                 const filteredRows = indicesToKeep
                     .map(index => rows[index])
-                    // Only keep rows that actually exist and have at least one non-null value
-                    .filter(row => row && (row[0] || row[1])); 
+                    // Only keep rows that actually exist
+                    .filter(row => row); 
 
                 if (filteredRows.length === 0) {
                     element.innerHTML = '<li>No matching schedule items found within the specified rows.</li>';
@@ -249,8 +251,10 @@
                 }
 
                 filteredRows.forEach(item => {
+                    // Time is Column A (index 0)
                     const time = dec(item[0]) || 'N/A';
-                    const text = dec(item[1]) || 'No description';
+                    // Text is Column D (index 3)
+                    const text = dec(item[3]) || 'No description'; 
                     
                     const li = document.createElement('li');
                     li.innerHTML = `<span class="time-stamp">${time}</span> <span class="activity-text">${text}</span>`;
@@ -258,23 +262,19 @@
                 });
             };
 
-            // --- 2. Uniform of the Day Renderer (NEW) ---
+            // --- 2. Uniform of the Day Renderer ---
             const renderUniformOfTheDay = (rows, element) => {
-                // Row 2 is index 1 in the data array (since index 0 is the header row which was sliced off)
+                // Row 2 is index 1 in the data array
                 const row = rows[1]; 
 
                 // We want the second cell (index 1) of Row 2.
-                // If Row 2 exists AND its second cell exists
                 if (!row || !row[1]) {
                     element.innerHTML = '<span style="color: #c2b280;">Uniform data not found in Row 2, Column B.</span>';
                     return;
                 }
                 
-                // Decode the uniform text
                 const uniformText = dec(row[1]);
                 
-                // Create a single element to display the uniform text prominently
-                // Using a <h2> for prominence, and ensuring there are no list styles.
                 const uniformHeading = document.createElement('h2');
                 uniformHeading.textContent = uniformText || 'NOT SPECIFIED';
                 uniformHeading.style.margin = '0';
@@ -303,7 +303,6 @@
 
             // --- Execute all fetches on load ---
             fetchAndRenderCSV('schedule', scheduleList, renderSchedule);
-            // Updated to use the new render function
             fetchAndRenderCSV('activity', uniformDisplayElement, renderUniformOfTheDay);
             fetchAndRenderCSV('actions', actionList, renderActions);
 
