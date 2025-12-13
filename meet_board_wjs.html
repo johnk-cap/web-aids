@@ -162,8 +162,8 @@
 
             // Data source mappings: [GID, Column Count]
             const DATA_SOURCES = {
-                // colCount remains 4 to fetch Column D data
-                schedule: { gid: '1034767002', colCount: 4 }, 
+                // SCHEDULE CHANGE: colCount increased to 7 (A, B, C, D, E, F, G) to fetch column G data
+                schedule: { gid: '1034767002', colCount: 7 }, 
                 activity: { gid: '1138531778', colCount: 2 }, 
                 actions: { gid: '1970258165', colCount: 1 }    
             };
@@ -212,6 +212,7 @@
                         .map(line => line.trim())
                         .filter(line => line) // Remove empty lines
                         .map(line => {
+                            // Limit to the requested column count.
                             return line.split(',').slice(0, colCount).map(cell => cell.trim().replace(/^"|"$/g, ''));
                         });
 
@@ -228,8 +229,8 @@
                 }
             };
 
-            // --- 1. Schedule Panel Renderer (MODIFIED FOR TABLE) ---
-            // Now builds a table structure and fetches Column A (index 0) and Column D (index 3)
+            // --- 1. Schedule Panel Renderer (MODIFIED FOR 4 COLUMNS) ---
+            // Now fetches: Column A (index 0), Column D (index 3), Column C (index 2), Column G (index 6)
             const renderSchedule = (rows, element) => {
                 // Indices for Sheet Rows 3, 4, 5, and 6
                 const indicesToKeep = [2, 3, 4, 5];
@@ -248,26 +249,39 @@
                 table.className = 'schedule-table'; // Class for styling
 
                 filteredRows.forEach(item => {
-                    // Time is Column A (index 0)
-                    const time = dec(item[0]) || '';
-                    // Text is Column D (index 3)
-                    const text = dec(item[3]) || ''; 
+                    // Data mapping
+                    const time = dec(item[0]) || '';       // Column A (index 0)
+                    const activity = dec(item[3]) || '';   // Column D (index 3)
+                    const columnC = dec(item[2]) || '';    // Column C (index 2)
+                    const columnG = dec(item[6]) || '';    // Column G (index 6)
                     
                     // Create row
                     const tr = document.createElement('tr');
 
-                    // Left cell (Time) - Class 'time-cell' for right-justified style
+                    // 1. Time (Col A) - right-justified
                     const tdTime = document.createElement('td');
                     tdTime.className = 'time-cell'; 
                     tdTime.textContent = time;
                     
-                    // Right cell (Text) - Class 'activity-cell' for center-justified style
-                    const tdText = document.createElement('td');
-                    tdText.className = 'activity-cell'; 
-                    tdText.textContent = text;
+                    // 2. Activity (Col D) - center-justified
+                    const tdActivity = document.createElement('td');
+                    tdActivity.className = 'activity-cell'; 
+                    tdActivity.textContent = activity;
+
+                    // 3. New Column (Col C) - Class 'schedule-col-c'
+                    const tdColC = document.createElement('td');
+                    tdColC.className = 'schedule-col-c'; 
+                    tdColC.textContent = columnC;
+
+                    // 4. New Column (Col G) - Class 'schedule-col-g'
+                    const tdColG = document.createElement('td');
+                    tdColG.className = 'schedule-col-g'; 
+                    tdColG.textContent = columnG;
 
                     tr.appendChild(tdTime);
-                    tr.appendChild(tdText);
+                    tr.appendChild(tdActivity);
+                    tr.appendChild(tdColC);
+                    tr.appendChild(tdColG);
                     table.appendChild(tr);
                 });
 
