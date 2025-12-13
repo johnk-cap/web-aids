@@ -6,6 +6,58 @@
     <title>Meeting Schedule</title>
 
     <style>
+
+		/* Schedule Table Styles */
+.schedule-table {
+    width: 100%;
+    border-collapse: collapse; /* Removes spacing between borders */
+    margin-top: 5px; 
+    font-size: 1.2em;
+}
+
+.schedule-table td {
+    padding: 10px 5px;
+    /* Apply border only to the bottom of the cell */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2); 
+    vertical-align: middle;
+}
+
+/* Remove border from the last row for a clean edge */
+.schedule-table tr:last-child td {
+    border-bottom: none; 
+}
+
+/* --- COLUMN ALIGNMENT AND WIDTHS (Total width = 100%) --- */
+
+/* Column 1 (Time - Col A): Right Justified */
+.schedule-table .time-cell {
+    width: 15%; 
+    text-align: right;
+    font-weight: bold;
+    padding-right: 10px;
+}
+
+/* Column 2 (Activity - Col D): Center Justified */
+.schedule-table .activity-cell {
+    width: 45%; 
+    text-align: center;
+}
+
+/* Column 3 (New - Col C): Center Justified */
+.schedule-table .schedule-col-c {
+    width: 20%;
+    text-align: center;
+    font-size: 0.95em; 
+    color: var(--earthtone-yellow-light); /* Assuming this variable is defined */
+}
+
+/* Column 4 (New - Col G): Center Justified */
+.schedule-table .schedule-col-g {
+    width: 20%;
+    text-align: center;
+    font-size: 0.95em;
+    color: var(--earthtone-yellow-light);
+}
         /* Palatte Definitions */
         :root {
             --dark-bg: #141414;
@@ -162,7 +214,7 @@
 
             // Data source mappings: [GID, Column Count]
             const DATA_SOURCES = {
-                // SCHEDULE CHANGE: colCount increased to 7 (A, B, C, D, E, F, G) to fetch column G data
+                // SCHEDULE CHANGE: colCount increased to 7 (A to G)
                 schedule: { gid: '1034767002', colCount: 7 }, 
                 activity: { gid: '1138531778', colCount: 2 }, 
                 actions: { gid: '1970258165', colCount: 1 }    
@@ -230,7 +282,7 @@
             };
 
             // --- 1. Schedule Panel Renderer (MODIFIED FOR 4 COLUMNS) ---
-            // Now fetches: Column A (index 0), Column D (index 3), Column C (index 2), Column G (index 6)
+            // Fetches: Col A (index 0), Col D (index 3), Col C (index 2), Col G (index 6)
             const renderSchedule = (rows, element) => {
                 // Indices for Sheet Rows 3, 4, 5, and 6
                 const indicesToKeep = [2, 3, 4, 5];
@@ -246,10 +298,10 @@
 
                 // 1. Create Table element
                 const table = document.createElement('table');
-                table.className = 'schedule-table'; // Class for styling
+                table.className = 'schedule-table'; // Class for styling (CSS provided separately)
 
                 filteredRows.forEach(item => {
-                    // Data mapping
+                    // Data mapping based on new column requirements
                     const time = dec(item[0]) || '';       // Column A (index 0)
                     const activity = dec(item[3]) || '';   // Column D (index 3)
                     const columnC = dec(item[2]) || '';    // Column C (index 2)
@@ -258,22 +310,22 @@
                     // Create row
                     const tr = document.createElement('tr');
 
-                    // 1. Time (Col A) - right-justified
+                    // 1. Time (Col A) - uses .time-cell
                     const tdTime = document.createElement('td');
                     tdTime.className = 'time-cell'; 
                     tdTime.textContent = time;
                     
-                    // 2. Activity (Col D) - center-justified
+                    // 2. Activity (Col D) - uses .activity-cell
                     const tdActivity = document.createElement('td');
                     tdActivity.className = 'activity-cell'; 
                     tdActivity.textContent = activity;
 
-                    // 3. New Column (Col C) - Class 'schedule-col-c'
+                    // 3. New Column (Col C) - uses .schedule-col-c
                     const tdColC = document.createElement('td');
                     tdColC.className = 'schedule-col-c'; 
                     tdColC.textContent = columnC;
 
-                    // 4. New Column (Col G) - Class 'schedule-col-g'
+                    // 4. New Column (Col G) - uses .schedule-col-g
                     const tdColG = document.createElement('td');
                     tdColG.className = 'schedule-col-g'; 
                     tdColG.textContent = columnG;
