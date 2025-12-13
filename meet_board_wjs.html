@@ -154,14 +154,17 @@
         </div>
     </main>
 
-    <script>
+<script>
         document.addEventListener('DOMContentLoaded', () => {
-            // NOTE: These URLs assume your local server is running a proxy 
-            // that handles the Google Sheet query logic (gviz/tq) and returns clean JSON.
-            const PROXY_URLS = {
-                schedule: '/api/sheet-data/schedule',
-                activity: '/api/sheet-data/activity',
-                actions: '/api/sheet-data/actions'
+            // --- CONFIGURATION ---
+            const SHEET_ID = '1ZhXzefIuYG6h9EiLUEOXvfg3x6-rKfKj8osK4Blw76c';
+            const BASE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?`;
+
+            // Data source mappings: [GID, Range (A1 notation)]
+            const DATA_SOURCES = {
+                schedule: { gid: '0', range: 'A2:B' },   // GID 0, Columns A (Time) and B (Text)
+                activity: { gid: '1138531778', range: 'A2:B' }, // GID 1138531778, Columns A (Time) and B (Text)
+                actions: { gid: '1970258165', range: 'A2:A' }    // GID 1970258165, Column A (Text)
             };
 
             // --- Panel Element References ---
@@ -169,77 +172,101 @@
             const activityList = document.getElementById('activity-list');
             const actionList = document.getElementById('action-items-list');
 
-            // --- Generic Fetch Function for Proxy Endpoints ---
-            const fetchData = async (endpoint, listElement, transformFunction) => {
+            // --- GVIZ Helper Function ---
+            const buildGvizUrl = (source) => {
+                const { gid, range } = DATA_SOURCES[source];
+                // Using a SELECT query helps standardize the data structure
+                const query = encodeURIComponent(`select * where A is not null limit 20`);
+                return `${BASE_URL}gid=${gid}&range=${range}&tq=${query}&tqx=out:json`;
+            };
+
+            // --- Universal Fetch and GVIZ Parser Function ---
+            const fetchAndRenderGviz = async (source, listElement, transformFunction) => {
+                const endpoint = buildGvizUrl(source);
                 try {
-                    // Placeholder message during fetch
-                    listElement.innerHTML = `<li>Fetching data from ${endpoint}...</li>`;
+                    listElement.innerHTML = `<li>Fetching data for ${source}...</li>`;
 
                     const response = await fetch(endpoint);
-                    if (!response.ok) {
-                        throw new Error(`Proxy error! Status: ${response.status} from ${endpoint}`);
+                    const text = await response.text();
+                    
+                    // Gviz response needs special parsing to extract the JSON object
+                    const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                    const data = JSON.parse(jsonString);
+
+                    if (!data.table || !data.table.rows) {
+                        throw new Error("Invalid Gviz data structure received.");
                     }
-                    const data = await response.json();
+                    
+                    // Extract the clean array of objects
+                    const rows = data.table.rows.map(row => {
+                        const cellData = row.c.map(cell => cell ? cell.v : null);
+                        return cellData;
+                    });
                     
                     // Clear previous content
                     listElement.innerHTML = ''; 
 
-                    // Apply the specific rendering function for this panel
-                    transformFunction(data, listElement);
+                    // Apply the specific rendering function
+                    transformFunction(rows, listElement);
 
                 } catch (error) {
-                    console.error('Data Load Error:', error);
-                    listElement.innerHTML = `<li>ERROR loading data: ${error.message}</li>`;
+                    console.error(`Data Load Error for ${source}:`, error);
+                    listElement.innerHTML = `<li>ERROR loading ${source} data: ${error.message}</li>`;
                 }
             };
 
             // --- 1. Schedule Panel Renderer ---
-            // Assumed Proxy JSON format for Schedule: [{time: "19:00", text: "Welcome..."}, ...]
-            const renderSchedule = (data, element) => {
-                if (data.length === 0) {
+            // Expected Row Data: [Time (Col A), Text (Col B)]
+            const renderSchedule = (rows, element) => {
+                if (rows.length === 0) {
                     element.innerHTML = '<li>No schedule items found.</li>';
                     return;
                 }
-                data.forEach(item => {
+                rows.forEach(item => {
+                    const time = item[0] || 'N/A';
+                    const text = item[1] || 'No description';
                     const li = document.createElement('li');
-                    li.innerHTML = `<span class="time-stamp">${item.time}</span> <span class="activity-text">${item.text}</span>`;
+                    li.innerHTML = `<span class="time-stamp">${time}</span> <span class="activity-text">${text}</span>`;
                     element.appendChild(li);
                 });
             };
 
             // --- 2. Activity Log Renderer ---
-            // Assumed Proxy JSON format for Activity: [{time: "14:30", text: "Commits merged..."}, ...]
-            const renderActivity = (data, element) => {
-                if (data.length === 0) {
+            // Expected Row Data: [Time (Col A), Text (Col B)]
+            const renderActivity = (rows, element) => {
+                if (rows.length === 0) {
                     element.innerHTML = '<li>No recent activity found.</li>';
                     return;
                 }
-                data.forEach(item => {
+                rows.forEach(item => {
+                    const time = item[0] || 'N/A';
+                    const text = item[1] || 'No description';
                     const li = document.createElement('li');
-                    li.innerHTML = `<li>**${item.time}:** ${item.text}</li>`;
+                    li.innerHTML = `<li>**${time}:** ${text}</li>`;
                     element.appendChild(li);
                 });
             };
 
             // --- 3. Action Items Renderer ---
-            // Assumed Proxy JSON format for Actions: [{text: "Finalize vendor selection..."}, ...]
-            const renderActions = (data, element) => {
-                if (data.length === 0) {
+            // Expected Row Data: [Text (Col A)]
+            const renderActions = (rows, element) => {
+                if (rows.length === 0) {
                     element.innerHTML = '<li>No open action items found.</li>';
                     return;
                 }
                 // The Action Items panel uses an <ol> (ordered list)
-                data.forEach(item => {
+                rows.forEach(item => {
+                    const text = item[0] || 'No action item text';
                     const li = document.createElement('li');
-                    li.textContent = item.text;
+                    li.textContent = text;
                     element.appendChild(li);
                 });
             };
 
             // --- Execute all fetches on load ---
-            fetchData(PROXY_URLS.schedule, scheduleList, renderSchedule);
-            fetchData(PROXY_URLS.activity, activityList, renderActivity);
-            fetchData(PROXY_URLS.actions, actionList, renderActions);
+            fetchAndRenderGviz('schedule', scheduleList, renderSchedule);
+            fetchAndRenderGviz('activity', activityList, renderActivity);
+            fetchAndRenderGviz('actions', actionList, renderActions);
 
         });
 
@@ -272,8 +299,6 @@
             
             // The occurrence number is determined by which week of the month the date falls in.
             // We find the week number by taking the day of the month, subtracting 1, and dividing by 7.
-            // Math.floor((1 - 1) / 7) + 1 = 1st
-            // Math.floor((8 - 1) / 7) + 1 = 2nd
             const dayOfMonth = soonestMonday.getDate();
             const occurrenceNumber = Math.floor((dayOfMonth - 1) / 7) + 1;
             
