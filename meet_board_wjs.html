@@ -164,13 +164,14 @@
             const DATA_SOURCES = {
                 // Assuming GIDs remain correct for their respective tabs
                 schedule: { gid: '1034767002', colCount: 2 },
-                activity: { gid: '1138531778', colCount: 2 }, 
+                activity: { gid: '1138531778', colCount: 2 }, // Still fetches 2 columns, but only uses the second one
                 actions: { gid: '1970258165', colCount: 1 }    
             };
 
             // --- Panel Element References ---
             const scheduleList = document.getElementById('schedule-list');
-            const activityList = document.getElementById('activity-list');
+            // This ID remains consistent with the HTML, but its function has changed
+            const uniformDisplayElement = document.getElementById('activity-list');
             const actionList = document.getElementById('action-items-list');
 
             // --- DECODING FUNCTION ---
@@ -231,8 +232,7 @@
                 }
             };
 
-            // --- 1. Schedule Panel Renderer (MODIFIED) ---
-            // Expected Row Data: [Time (Col 0), Text (Col 1)]
+            // --- 1. Schedule Panel Renderer ---
             const renderSchedule = (rows, element) => {
                 // Indices for Sheet Rows 3, 4, 7, and 8
                 const indicesToKeep = [2, 3, 6, 7];
@@ -249,7 +249,6 @@
                 }
 
                 filteredRows.forEach(item => {
-                    // DECODE all relevant text fields
                     const time = dec(item[0]) || 'N/A';
                     const text = dec(item[1]) || 'No description';
                     
@@ -259,26 +258,34 @@
                 });
             };
 
-            // --- 2. Activity Log Renderer ---
-            // Expected Row Data: [Time (Col 0), Text (Col 1)]
-            const renderActivity = (rows, element) => {
-                if (rows.length === 0) {
-                    element.innerHTML = '<li>No recent activity found.</li>';
+            // --- 2. Uniform of the Day Renderer (NEW) ---
+            const renderUniformOfTheDay = (rows, element) => {
+                // Row 2 is index 1 in the data array (since index 0 is the header row which was sliced off)
+                const row = rows[1]; 
+
+                // We want the second cell (index 1) of Row 2.
+                // If Row 2 exists AND its second cell exists
+                if (!row || !row[1]) {
+                    element.innerHTML = '<span style="color: #c2b280;">Uniform data not found in Row 2, Column B.</span>';
                     return;
                 }
-                rows.forEach(item => {
-                    // DECODE all relevant text fields
-                    const time = dec(item[0]) || 'N/A';
-                    const text = dec(item[1]) || 'No description';
-                    
-                    const li = document.createElement('li');
-                    li.innerHTML = `<li>**${time}:** ${text}</li>`;
-                    element.appendChild(li);
-                });
+                
+                // Decode the uniform text
+                const uniformText = dec(row[1]);
+                
+                // Create a single element to display the uniform text prominently
+                // Using a <h2> for prominence, and ensuring there are no list styles.
+                const uniformHeading = document.createElement('h2');
+                uniformHeading.textContent = uniformText || 'NOT SPECIFIED';
+                uniformHeading.style.margin = '0';
+                uniformHeading.style.textAlign = 'center';
+                uniformHeading.style.fontSize = '2.5em';
+                uniformHeading.style.color = 'var(--earthtone-secondary)'; 
+                
+                element.appendChild(uniformHeading);
             };
 
             // --- 3. Action Items Renderer ---
-            // Expected Row Data: [Text (Col 0)]
             const renderActions = (rows, element) => {
                 if (rows.length === 0) {
                     element.innerHTML = '<li>No open action items found.</li>';
@@ -286,7 +293,6 @@
                 }
                 // The Action Items panel uses an <ol> (ordered list)
                 rows.forEach(item => {
-                    // DECODE all relevant text fields
                     const text = dec(item[0]) || 'No action item text';
                     
                     const li = document.createElement('li');
@@ -297,7 +303,8 @@
 
             // --- Execute all fetches on load ---
             fetchAndRenderCSV('schedule', scheduleList, renderSchedule);
-            fetchAndRenderCSV('activity', activityList, renderActivity);
+            // Updated to use the new render function
+            fetchAndRenderCSV('activity', uniformDisplayElement, renderUniformOfTheDay);
             fetchAndRenderCSV('actions', actionList, renderActions);
 
         });
@@ -330,7 +337,6 @@
             // 2. Determine the occurrence number (e.g., 1st, 2nd, 3rd)
             
             // The occurrence number is determined by which week of the month the date falls in.
-            // We find the week number by taking the day of the month, subtracting 1, and dividing by 7.
             const dayOfMonth = soonestMonday.getDate();
             const occurrenceNumber = Math.floor((dayOfMonth - 1) / 7) + 1;
             
