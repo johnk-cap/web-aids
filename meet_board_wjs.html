@@ -162,7 +162,7 @@
 
             // Data source mappings: [GID, Column Count]
             const DATA_SOURCES = {
-                // SCHEDULE CHANGE: colCount increased to 4 (A, B, C, D) to fetch column D data
+                // colCount remains 4 to fetch Column D data
                 schedule: { gid: '1034767002', colCount: 4 }, 
                 activity: { gid: '1138531778', colCount: 2 }, 
                 actions: { gid: '1970258165', colCount: 1 }    
@@ -196,7 +196,6 @@
             // --- Universal Fetch and CSV Parser Function ---
             const fetchAndRenderCSV = async (source, listElement, transformFunction) => {
                 const endpoint = buildPublicFeedUrl(source);
-                // Ensure we get enough columns for the request source
                 const { colCount } = DATA_SOURCES[source];
                 try {
                     listElement.innerHTML = `<li>Fetching data for ${source} via public feed...</li>`;
@@ -208,15 +207,11 @@
                     
                     const csvText = await response.text();
                     
-                    // Simple CSV parsing: split lines, then split cells by comma.
-                    // We skip the header row (index 0).
                     const rows = csvText.split('\n')
                         .slice(1) 
                         .map(line => line.trim())
                         .filter(line => line) // Remove empty lines
                         .map(line => {
-                            // Simple split by comma, works for basic text.
-                            // Limit to the requested column count.
                             return line.split(',').slice(0, colCount).map(cell => cell.trim().replace(/^"|"$/g, ''));
                         });
 
@@ -233,16 +228,14 @@
                 }
             };
 
-            // --- 1. Schedule Panel Renderer (MODIFIED) ---
-            // Now fetching Column A (index 0) and Column D (index 3)
+            // --- 1. Schedule Panel Renderer (MODIFIED FOR TABLE) ---
+            // Now builds a table structure and fetches Column A (index 0) and Column D (index 3)
             const renderSchedule = (rows, element) => {
                 // Indices for Sheet Rows 3, 4, 5, and 6
                 const indicesToKeep = [2, 3, 4, 5];
                 
-                // Filter the rows based on the required indices
                 const filteredRows = indicesToKeep
                     .map(index => rows[index])
-                    // Only keep rows that actually exist
                     .filter(row => row); 
 
                 if (filteredRows.length === 0) {
@@ -250,24 +243,40 @@
                     return;
                 }
 
+                // 1. Create Table element
+                const table = document.createElement('table');
+                table.className = 'schedule-table'; // Class for styling
+
                 filteredRows.forEach(item => {
                     // Time is Column A (index 0)
-                    const time = dec(item[0]) || 'N/A';
+                    const time = dec(item[0]) || '';
                     // Text is Column D (index 3)
-                    const text = dec(item[3]) || 'No description'; 
+                    const text = dec(item[3]) || ''; 
                     
-                    const li = document.createElement('li');
-                    li.innerHTML = `<span class="time-stamp">${time}</span> <span class="activity-text">${text}</span>`;
-                    element.appendChild(li);
+                    // Create row
+                    const tr = document.createElement('tr');
+
+                    // Left cell (Time) - Class 'time-cell' for right-justified style
+                    const tdTime = document.createElement('td');
+                    tdTime.className = 'time-cell'; 
+                    tdTime.textContent = time;
+                    
+                    // Right cell (Text) - Class 'activity-cell' for center-justified style
+                    const tdText = document.createElement('td');
+                    tdText.className = 'activity-cell'; 
+                    tdText.textContent = text;
+
+                    tr.appendChild(tdTime);
+                    tr.appendChild(tdText);
+                    table.appendChild(tr);
                 });
+
+                element.appendChild(table);
             };
 
             // --- 2. Uniform of the Day Renderer ---
             const renderUniformOfTheDay = (rows, element) => {
-                // Row 2 is index 1 in the data array
                 const row = rows[1]; 
-
-                // We want the second cell (index 1) of Row 2.
                 if (!row || !row[1]) {
                     element.innerHTML = '<span style="color: #c2b280;">Uniform data not found in Row 2, Column B.</span>';
                     return;
