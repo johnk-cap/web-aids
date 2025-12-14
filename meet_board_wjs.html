@@ -233,7 +233,7 @@
                 var decoded = "";
                 for (var i = 0; i < str.length; i++) {
                     var a = str.charCodeAt(i);
-                    var b = a ^ 123; // bitwise XOR with 123
+                    var b = a ^ 19; // bitwise XOR with 19
                     decoded = decoded + String.fromCharCode(b);
                 }
                 return decoded;
