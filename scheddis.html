@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirecting...</title>
+  <script>
+    function redirectByMonday() {
+      // Replace these URLs with your actual destination links
+      const destinations = [
+        'Red1.jpg', // 1st Monday of the month
+        'Red2.jpg', // 2nd Monday of the month
+        'Red3.jpg', // 3rd Monday of the month
+        'Red4.jpg', // 4th Monday of the month
+        'Red5.jpg', // 5th Monday of the month
+      ];
+
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+      // Days until next Monday (0 if today is Monday)
+      const daysUntilMonday = (1 + 7 - dayOfWeek) % 7;
+
+      // Advance date to target Monday
+      const targetMonday = new Date(today);
+      targetMonday.setDate(today.getDate() + daysUntilMonday);
+
+      // Determine which Monday of the month it is (1 through 5)
+      const mondayOrdinal = Math.ceil(targetMonday.getDate() / 7);
+
+      // Redirect to the target destination
+      window.location.href = destinations[mondayOrdinal - 1];
+    }
+
+    // Run redirection logic as soon as script parses
+    redirectByMonday();
+  </script>
+</head>
+<body>
+  <p>Redirecting to your destination, please wait...</p>
+
+  <!-- Fallback content if JavaScript is disabled -->
+  <noscript>
+    <p>JavaScript is disabled in your browser. Please enable JavaScript to be automatically redirected.</p>
+  </noscript>
+</body>
+</html>
