@@ -3,17 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Prevents browser caching of this redirect HTML page -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
   <title>Redirecting...</title>
   <script>
-    function redirectByMonday() {
-      // Replace these URLs with your actual destination links
-      const destinations = [
-        'Red1.jpg', // 1st Monday of the month
-        'Red2.jpg', // 2nd Monday of the month
-        'Red3.jpg', // 3rd Monday of the month
-        'Red4.jpg', // 4th Monday of the month
-        'Red5.jpg', // 5th Monday of the month
-      ];
+    function redirectByMondayAndMonth() {
+      const destinations = {
+        'blue-1': 'https://example.com/blue-1',
+        'blue-2': 'https://example.com/blue-2',
+        'blue-3': 'https://example.com/blue-3',
+        'blue-4': 'https://example.com/blue-4',
+        'blue-5': 'https://example.com/blue-5',
+        'red-1':  'https://example.com/red-1',
+        'red-2':  'https://example.com/red-2',
+        'red-3':  'https://example.com/red-3',
+        'red-4':  'https://example.com/red-4',
+        'red-5':  'https://example.com/red-5'
+      };
 
       const today = new Date();
       const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
@@ -25,21 +35,32 @@
       const targetMonday = new Date(today);
       targetMonday.setDate(today.getDate() + daysUntilMonday);
 
-      // Determine which Monday of the month it is (1 through 5)
+      // Determine month parity of target Monday (1-indexed)
+      const monthNumber = targetMonday.getMonth() + 1;
+      const colorPrefix = (monthNumber % 2 !== 0) ? 'blue' : 'red';
+
+      // Determine target Monday's ordinal position (1st through 5th)
       const mondayOrdinal = Math.ceil(targetMonday.getDate() / 7);
 
-      // Redirect to the target destination
-      window.location.href = destinations[mondayOrdinal - 1];
+      // Construct look-up key (e.g., "blue-1", "red-4")
+      const destinationKey = `${colorPrefix}-${mondayOrdinal}`;
+
+      if (destinations[destinationKey]) {
+        // Append a unique timestamp query parameter to bypass cache on target URL
+        const cacheBustingUrl = destinations[destinationKey] + '?nocache=' + Date.now();
+
+        // Use location.replace to force direct load and omit entry from browser history
+        window.location.replace(cacheBustingUrl);
+      }
     }
 
-    // Run redirection logic as soon as script parses
-    redirectByMonday();
+    // Execute redirection immediately
+    redirectByMondayAndMonth();
   </script>
 </head>
 <body>
   <p>Redirecting to your destination, please wait...</p>
 
-  <!-- Fallback content if JavaScript is disabled -->
   <noscript>
     <p>JavaScript is disabled in your browser. Please enable JavaScript to be automatically redirected.</p>
   </noscript>
