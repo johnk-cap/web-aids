@@ -25,9 +25,9 @@
         'red-5':  'red5.jpg'
       };
 
-      // Check URL parameters for ?target=next or ?week=next
+      // Check URL parameters for ?target=next
       const urlParams = new URLSearchParams(window.location.search);
-      const isNextMonday = urlParams.get('target') === 'next' || urlParams.get('week') === 'next';
+      const isNextMonday = urlParams.get('target') === 'next';
 
       const today = new Date();
       const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
