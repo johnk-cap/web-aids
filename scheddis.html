@@ -13,29 +13,38 @@
   <script>
     function redirectByMondayAndMonth() {
       const destinations = {
-        'blue-1': 'blue1.jpg',
-        'blue-2': 'blue2.jpg',
-        'blue-3': 'blue3.jpg',
-        'blue-4': 'blue4.jpg',
-        'blue-5': 'blue5.jpg',
-        'red-1':  'red1.jpg',
-        'red-2':  'red2.jpg',
-        'red-3':  'red3.jpg',
-        'red-4':  'red4.jpg',
-        'red-5':  'red5.jpg'
+        'blue-1': 'https://example.com/blue-1',
+        'blue-2': 'https://example.com/blue-2',
+        'blue-3': 'https://example.com/blue-3',
+        'blue-4': 'https://example.com/blue-4',
+        'blue-5': 'https://example.com/blue-5',
+        'red-1':  'https://example.com/red-1',
+        'red-2':  'https://example.com/red-2',
+        'red-3':  'https://example.com/red-3',
+        'red-4':  'https://example.com/red-4',
+        'red-5':  'https://example.com/red-5'
       };
+
+      // Check URL parameters for ?target=next or ?week=next
+      const urlParams = new URLSearchParams(window.location.search);
+      const isNextMonday = urlParams.get('target') === 'next' || urlParams.get('week') === 'next';
 
       const today = new Date();
       const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
 
-      // Days until next Monday (0 if today is Monday)
-      const daysUntilMonday = (1 + 7 - dayOfWeek) % 7;
+      // Base days until target Monday (0 if today is Monday)
+      let daysUntilMonday = (1 + 7 - dayOfWeek) % 7;
+
+      // Add 7 additional days if "next" week is requested via query string
+      if (isNextMonday) {
+        daysUntilMonday += 7;
+      }
 
       // Advance date to target Monday
       const targetMonday = new Date(today);
       targetMonday.setDate(today.getDate() + daysUntilMonday);
 
-      // Determine month parity of target Monday (1-indexed)
+      // Determine month parity of target Monday (1-indexed: 1 = Jan, 2 = Feb, etc.)
       const monthNumber = targetMonday.getMonth() + 1;
       const colorPrefix = (monthNumber % 2 !== 0) ? 'blue' : 'red';
 
@@ -46,15 +55,15 @@
       const destinationKey = `${colorPrefix}-${mondayOrdinal}`;
 
       if (destinations[destinationKey]) {
-        // Append a unique timestamp query parameter to bypass cache on target URL
+        // Append unique timestamp parameter to bypass cache on target URL
         const cacheBustingUrl = destinations[destinationKey] + '?nocache=' + Date.now();
 
-        // Use location.replace to force direct load and omit entry from browser history
+        // Redirect directly without saving redirect page into session history
         window.location.replace(cacheBustingUrl);
       }
     }
 
-    // Execute redirection immediately
+    // Run redirection logic immediately
     redirectByMondayAndMonth();
   </script>
 </head>
