@@ -30,7 +30,7 @@
             background-color: transparent;
         }
 
-        /* Frame sized 15% smaller than 50% quadrant (42.5% x 44.5%) 
+        /* Frame sized 15% smaller than 50% quadrant (42.5% x 45.5%) 
            Positioned at bottom: 7.5%, right: 5.0% */
         .doc-frame-wrapper {
             position: absolute;
@@ -40,13 +40,27 @@
             height: 45.5%;
             overflow: hidden;
             pointer-events: none; /* Completely blocks mouse wheel, touch drag, and click events */
+            
+            /* Container query setup to drive iframe zoom scaling */
+            container-type: size;
         }
 
+        /* 
+           By giving the iframe a fixed internal base dimension (e.g. 800px x 800px) 
+           and scaling it via dynamic transform relative to container width (cqw), 
+           the document text scales like an image—preserving a fixed line layout.
+        */
         .doc-frame-wrapper iframe {
+            width: 800px;
+            height: 800px;
+            border: 0;
+            background-color: transparent;
             overflow: hidden;
             pointer-events: none;
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
+            transform-origin: top left;
+            transform: scale(calc(100cqw / 800));
         }
 
         .doc-frame-wrapper iframe::-webkit-scrollbar {
@@ -70,9 +84,7 @@
         <div class="doc-frame-wrapper bg-transparent overflow-hidden pointer-events-none">
             <iframe 
                 src="https://docs.google.com/document/d/e/2PACX-1vSYuF-hfjcDpQzWkFOMOb1VqUjWHPVLO8lmknbfISgoTcUX12uVmBsMt0p_HKLH4u5rR0RvM-aL0pGo/pub?embedded=true"
-                class="w-full h-full border-0 bg-transparent pointer-events-none"
                 scrolling="no"
-                style="overflow: hidden; pointer-events: none;"
                 title="Embedded Google Document">
             </iframe>
         </div>
