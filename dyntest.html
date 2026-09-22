@@ -23,6 +23,29 @@
             background-color: #000000;
         }
 
+        /* Root viewport container for optional mobile rotation */
+        #viewport-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* 90-degree clockwise rotation styling for mobile devices */
+        .is-mobile-rotated {
+            width: 100vh !important;
+            height: 100vw !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) rotate(90deg);
+            transform-origin: center center;
+        }
+
         /* Container that dynamically scales to match image dimensions */
         #image-container {
             position: relative;
@@ -46,7 +69,7 @@
         }
 
         /* 
-           By giving the iframe a fixed internal base dimension (e.g. 800px x 800px) 
+           By giving the iframe a fixed internal base dimension (800px x 800px) 
            and scaling it via dynamic transform relative to container width (cqw), 
            the document text scales like an image—preserving a fixed line layout.
         */
@@ -70,23 +93,26 @@
 </head>
 <body class="w-screen h-screen flex items-center justify-center overflow-hidden bg-black select-none">
 
-    <!-- Image Wrapper Container -->
-    <div id="image-container" class="relative">
-        <!-- Background Image -->
-        <img 
-            id="bg-image" 
-            src="https://johnk-cap.github.io/web-aids/red2.jpg" 
-            alt="Background" 
-            class="w-full h-full block object-fill pointer-events-none"
-        />
+    <!-- Root Viewport Wrapper -->
+    <div id="viewport-wrapper">
+        <!-- Image Wrapper Container -->
+        <div id="image-container" class="relative">
+            <!-- Background Image -->
+            <img 
+                id="bg-image" 
+                src="https://johnk-cap.github.io/web-aids/red2.jpg" 
+                alt="Background" 
+                class="w-full h-full block object-fill pointer-events-none"
+            />
 
-        <!-- Non-Scrolling Document Iframe in Lower Right Quadrant -->
-        <div class="doc-frame-wrapper bg-transparent overflow-hidden pointer-events-none">
-            <iframe 
-                src="https://docs.google.com/document/d/e/2PACX-1vSYuF-hfjcDpQzWkFOMOb1VqUjWHPVLO8lmknbfISgoTcUX12uVmBsMt0p_HKLH4u5rR0RvM-aL0pGo/pub?embedded=true"
-                scrolling="no"
-                title="Embedded Google Document">
-            </iframe>
+            <!-- Non-Scrolling Document Iframe in Lower Right Quadrant -->
+            <div class="doc-frame-wrapper bg-transparent overflow-hidden pointer-events-none">
+                <iframe 
+                    src="https://docs.google.com/document/d/e/2PACX-1vSYuF-hfjcDpQzWkFOMOb1VqUjWHPVLO8lmknbfISgoTcUX12uVmBsMt0p_HKLH4u5rR0RvM-aL0pGo/pub?embedded=true"
+                    scrolling="no"
+                    title="Embedded Google Document">
+                </iframe>
+            </div>
         </div>
     </div>
 
@@ -94,15 +120,36 @@
         (function() {
             const bgImg = document.getElementById('bg-image');
             const imgContainer = document.getElementById('image-container');
+            const viewportWrapper = document.getElementById('viewport-wrapper');
             
             let naturalWidth = 0;
             let naturalHeight = 0;
 
+            // Detect mobile devices via userAgent or touch points / screen size criteria
+            function isMobileDevice() {
+                const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+                const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+                const isTouchMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0) && (window.innerWidth <= 1024 || window.innerHeight <= 1024);
+                return mobileRegex.test(userAgent) || isTouchMobile;
+            }
+
+            const isMobile = isMobileDevice();
+
+            if (isMobile) {
+                viewportWrapper.classList.add('is-mobile-rotated');
+            }
+
             function updateLayout() {
                 if (!naturalWidth || !naturalHeight) return;
 
-                const vw = window.innerWidth;
-                const vh = window.innerHeight;
+                // When rotated 90deg on mobile, the effective width and height are swapped
+                let vw = window.innerWidth;
+                let vh = window.innerHeight;
+
+                if (isMobile) {
+                    vw = window.innerHeight;
+                    vh = window.innerWidth;
+                }
 
                 const imgAspect = naturalWidth / naturalHeight;
                 const screenAspect = vw / vh;
@@ -137,6 +184,7 @@
             }
 
             window.addEventListener('resize', updateLayout);
+            window.addEventListener('orientationchange', updateLayout);
         })();
     </script>
 
