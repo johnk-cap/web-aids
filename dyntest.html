@@ -63,19 +63,27 @@
             height: 45.5%;
             overflow: hidden;
             pointer-events: none; /* Completely blocks mouse wheel, touch drag, and click events */
-            
-            /* Container query setup to drive iframe zoom scaling */
+            display: flex;
+            flex-direction: row;
+            gap: 2%;
+        }
+
+        .sub-frame-container {
+            width: 49%;
+            height: 100%;
+            position: relative;
             container-type: size;
+            overflow: hidden;
         }
 
         /* 
-           By giving the iframe a fixed internal base dimension (800px x 800px) 
+           By giving the iframe a fixed internal base dimension (800px x 1800px) 
            and scaling it via dynamic transform relative to container width (cqw), 
            the document text scales like an image—preserving a fixed line layout.
         */
-        .doc-frame-wrapper iframe {
+        .sub-frame-container iframe {
             width: 800px;
-            height: 800px;
+            height: 1800px;
             border: 0;
             background-color: transparent;
             overflow: hidden;
@@ -86,7 +94,7 @@
             transform: scale(calc(100cqw / 800));
         }
 
-        .doc-frame-wrapper iframe::-webkit-scrollbar {
+        .sub-frame-container iframe::-webkit-scrollbar {
             display: none; /* Chrome, Safari, Opera */
         }
     </style>
@@ -107,11 +115,20 @@
 
             <!-- Non-Scrolling Document Iframe in Lower Right Quadrant -->
             <div class="doc-frame-wrapper bg-transparent overflow-hidden pointer-events-none">
-                <iframe 
-                    src="https://docs.google.com/document/d/e/2PACX-1vS8Vhyfm1nG3NYtsJ-cN2fvy4oLzH73A_B8IiZUtR37sb5lo1MNz5aGd6-1-JNucIZ5hq4WFtU7rTrQ/pub?embedded=true"
-                    scrolling="no"
-                    title="Embedded Google Document">
-                </iframe>
+                <div class="sub-frame-container">
+                    <iframe 
+                        src="https://docs.google.com/document/d/e/2PACX-1vS8Vhyfm1nG3NYtsJ-cN2fvy4oLzH73A_B8IiZUtR37sb5lo1MNz5aGd6-1-JNucIZ5hq4WFtU7rTrQ/pub?embedded=true"
+                        scrolling="no"
+                        title="Embedded Google Document 1">
+                    </iframe>
+                </div>
+                <div class="sub-frame-container">
+                    <iframe 
+                        src="https://docs.google.com/document/d/e/2PACX-1vS8Vhyfm1nG3NYtsJ-cN2fvy4oLzH73A_B8IiZUtR37sb5lo1MNz5aGd6-1-JNucIZ5hq4WFtU7rTrQ/pub?embedded=true"
+                        scrolling="no"
+                        title="Embedded Google Document 2">
+                    </iframe>
+                </div>
             </div>
         </div>
     </div>
