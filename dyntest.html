@@ -21,24 +21,88 @@
             width: 100vw;
             height: 100vh;
             overflow: hidden;
+            background-color: #000000;
+        }
+
+        /* Container that dynamically scales to match image dimensions */
+        #image-container {
+            position: relative;
+            overflow: hidden;
             background-color: transparent;
-            background-image: url('https://johnk-cap.github.io/web-aids/red2.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
         }
     </style>
 </head>
-<body class="bg-transparent text-white antialiased font-sans">
+<body class="w-screen h-screen flex items-center justify-center overflow-hidden bg-black">
 
-    <!-- Bottom-Right Quadrant Iframe Wrapper (50vw x 50vh) -->
-    <div class="absolute bottom-0 right-0 w-[50vw] h-[50vh] bg-transparent overflow-hidden">
-        <iframe 
-            src="https://docs.google.com/document/d/e/2PACX-1vSYuF-hfjcDpQzWkFOMOb1VqUjWHPVLO8lmknbfISgoTcUX12uVmBsMt0p_HKLH4u5rR0RvM-aL0pGo/pub?embedded=true"
-            class="w-full h-full border-0 bg-transparent"
-            title="Embedded Google Document">
-        </iframe>
+    <!-- Image Wrapper Container -->
+    <div id="image-container" class="relative shadow-2xl">
+        <!-- Background Image -->
+        <img 
+            id="bg-image" 
+            src="https://johnk-cap.github.io/web-aids/red2.jpg" 
+            alt="Background" 
+            class="w-full h-full block object-fill pointer-events-none"
+        />
+
+        <!-- Document Iframe Constrained strictly to bottom-right 50% x 50% of the image -->
+        <div class="absolute bottom-0 right-0 w-1/2 h-1/2 bg-transparent overflow-hidden">
+            <iframe 
+                src="https://docs.google.com/document/d/e/2PACX-1vSYuF-hfjcDpQzWkFOMOb1VqUjWHPVLO8lmknbfISgoTcUX12uVmBsMt0p_HKLH4u5rR0RvM-aL0pGo/pub?embedded=true"
+                class="w-full h-full border-0 bg-transparent"
+                title="Embedded Google Document">
+            </iframe>
+        </div>
     </div>
+
+    <script>
+        (function() {
+            const bgImg = document.getElementById('bg-image');
+            const imgContainer = document.getElementById('image-container');
+            
+            let naturalWidth = 0;
+            let naturalHeight = 0;
+
+            function updateLayout() {
+                if (!naturalWidth || !naturalHeight) return;
+
+                const vw = window.innerWidth;
+                const vh = window.innerHeight;
+
+                const imgAspect = naturalWidth / naturalHeight;
+                const screenAspect = vw / vh;
+
+                let renderedW, renderedH;
+
+                if (screenAspect > imgAspect) {
+                    // Viewport is wider than image aspect ratio -> constrained by height
+                    renderedH = vh;
+                    renderedW = vh * imgAspect;
+                } else {
+                    // Viewport is taller than image aspect ratio -> constrained by width
+                    renderedW = vw;
+                    renderedH = vw / imgAspect;
+                }
+
+                // Apply calculated dimensions to the container
+                imgContainer.style.width = Math.floor(renderedW) + 'px';
+                imgContainer.style.height = Math.floor(renderedH) + 'px';
+            }
+
+            function onImageLoad() {
+                naturalWidth = bgImg.naturalWidth || 1920;
+                naturalHeight = bgImg.naturalHeight || 1080;
+                updateLayout();
+            }
+
+            if (bgImg.complete && bgImg.naturalWidth) {
+                onImageLoad();
+            } else {
+                bgImg.addEventListener('load', onImageLoad);
+            }
+
+            window.addEventListener('resize', updateLayout);
+        })();
+    </script>
 
 </body>
 </html>
