@@ -19,21 +19,24 @@
             width: 100vw;
             height: 100vh;
             overflow: hidden;
+            background-image: url('https://johnk-cap.github.io/web-aids/red2.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: transparent;
         }
     </style>
 </head>
-<body class="bg-slate-50 relative font-sans text-slate-900">
+<body class="relative font-sans bg-transparent text-white antialiased">
 
-    <!-- Simple headline in top-left area -->
-    <div class="absolute top-6 left-6">
-        <h1 class="text-xl font-bold tracking-tight text-slate-800">Document Viewer</h1>
+    <div class="absolute top-6 left-6 z-10">
+        <h1 class="text-2xl font-bold tracking-tight text-white drop-shadow-md">Document Viewer</h1>
     </div>
 
-    <!-- Bottom-Right Quadrant (50% width x 50% height of viewable window) -->
-    <div class="absolute bottom-0 right-0 w-[50vw] h-[50vh] bg-white border-t border-l border-slate-200">
+    <div class="absolute bottom-0 right-0 w-[50vw] h-[50vh] bg-transparent border-t border-l border-white/20">
         <iframe 
             src="https://docs.google.com/document/d/e/2PACX-1vSYuF-hfjcDpQzWkFOMOb1VqUjWHPVLO8lmknbfISgoTcUX12uVmBsMt0p_HKLH4u5rR0RvM-aL0pGo/pub?embedded=true"
-            class="w-full h-full border-0"
+            class="w-full h-full border-0 bg-transparent"
             title="Embedded Google Document">
         </iframe>
     </div>
