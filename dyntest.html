@@ -11,7 +11,6 @@
 
     <title>Embedded Document Viewer</title>
 
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
@@ -30,12 +29,22 @@
             overflow: hidden;
             background-color: transparent;
         }
+
+        /* Frame sized 15% smaller than the 50% quadrant (42.5% x 42.5%) 
+           and centered within the bottom-right quadrant (bottom: 3.75%, right: 3.75%) */
+        .doc-frame-wrapper {
+            position: absolute;
+            bottom: 8.75%;
+            right: 3.75%;
+            width: 42.5%;
+            height: 42.5%;
+        }
     </style>
 </head>
 <body class="w-screen h-screen flex items-center justify-center overflow-hidden bg-black">
 
     <!-- Image Wrapper Container -->
-    <div id="image-container" class="relative shadow-2xl">
+    <div id="image-container" class="relative">
         <!-- Background Image -->
         <img 
             id="bg-image" 
@@ -44,8 +53,8 @@
             class="w-full h-full block object-fill pointer-events-none"
         />
 
-        <!-- Document Iframe Constrained strictly to bottom-right 50% x 50% of the image -->
-        <div class="absolute bottom-0 right-0 w-1/2 h-1/2 bg-transparent overflow-hidden">
+        <!-- Centered Document Iframe in Lower Right Quadrant -->
+        <div class="doc-frame-wrapper bg-transparent overflow-hidden">
             <iframe 
                 src="https://docs.google.com/document/d/e/2PACX-1vSYuF-hfjcDpQzWkFOMOb1VqUjWHPVLO8lmknbfISgoTcUX12uVmBsMt0p_HKLH4u5rR0RvM-aL0pGo/pub?embedded=true"
                 class="w-full h-full border-0 bg-transparent"
