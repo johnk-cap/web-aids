@@ -11,7 +11,9 @@
 
     <title>Embedded Document Viewer</title>
 
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <style>
         html, body {
             margin: 0;
@@ -19,26 +21,55 @@
             width: 100vw;
             height: 100vh;
             overflow: hidden;
+            background-color: transparent;
+        }
+
+        /* Scaled background layer (shrunk by 10%) */
+        .bg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             background-image: url('https://johnk-cap.github.io/web-aids/red2.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            background-color: transparent;
+            transform: scale(0.9);
+            transform-origin: center center;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Interactive overlay container */
+        .content-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2;
         }
     </style>
 </head>
-<body class="relative font-sans bg-transparent text-white antialiased">
+<body class="bg-transparent text-white antialiased font-sans">
 
-    <div class="absolute top-6 left-6 z-10">
-        <h1 class="text-2xl font-bold tracking-tight text-white drop-shadow-md">Document Viewer</h1>
-    </div>
+    <div class="bg-layer"></div>
 
-    <div class="absolute bottom-0 right-0 w-[50vw] h-[50vh] bg-transparent border-t border-l border-white/20">
-        <iframe 
-            src="https://docs.google.com/document/d/e/2PACX-1vSYuF-hfjcDpQzWkFOMOb1VqUjWHPVLO8lmknbfISgoTcUX12uVmBsMt0p_HKLH4u5rR0RvM-aL0pGo/pub?embedded=true"
-            class="w-full h-full border-0 bg-transparent"
-            title="Embedded Google Document">
-        </iframe>
+    <div class="content-container">
+        
+        <!-- Headline Header -->
+        <div class="absolute top-6 left-6 z-10">
+            <h1 class="text-2xl font-bold tracking-tight text-white drop-shadow-md">Document Viewer</h1>
+        </div>
+
+        <!-- Bottom-Right Quadrant Iframe Wrapper (50vw x 50vh) -->
+        <div class="absolute bottom-0 right-0 w-[50vw] h-[50vh] bg-transparent overflow-hidden">
+            <iframe 
+                src="https://docs.google.com/document/d/e/2PACX-1vSYuF-hfjcDpQzWkFOMOb1VqUjWHPVLO8lmknbfISgoTcUX12uVmBsMt0p_HKLH4u5rR0RvM-aL0pGo/pub?embedded=true"
+                class="w-full h-full border-0 bg-transparent"
+                title="Embedded Google Document">
+            </iframe>
+        </div>
+
     </div>
 
 </body>
