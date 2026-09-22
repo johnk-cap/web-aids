@@ -30,18 +30,31 @@
             background-color: transparent;
         }
 
-        /* Frame sized 15% smaller than the 50% quadrant (42.5% x 42.5%) 
-           and centered within the bottom-right quadrant (bottom: 8.75%, right: 3.75%) */
+        /* Frame sized 15% smaller than 50% quadrant (42.5% x 42.5%) 
+           Positioned at bottom: 8.75%, right: 3.75% */
         .doc-frame-wrapper {
             position: absolute;
             bottom: 8.75%;
             right: 3.75%;
             width: 42.5%;
             height: 42.5%;
+            overflow: hidden;
+            pointer-events: none; /* Completely blocks mouse wheel, touch drag, and click events */
+        }
+
+        .doc-frame-wrapper iframe {
+            overflow: hidden;
+            pointer-events: none;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        .doc-frame-wrapper iframe::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
         }
     </style>
 </head>
-<body class="w-screen h-screen flex items-center justify-center overflow-hidden bg-black">
+<body class="w-screen h-screen flex items-center justify-center overflow-hidden bg-black select-none">
 
     <!-- Image Wrapper Container -->
     <div id="image-container" class="relative">
@@ -53,11 +66,13 @@
             class="w-full h-full block object-fill pointer-events-none"
         />
 
-        <!-- Centered Document Iframe in Lower Right Quadrant -->
-        <div class="doc-frame-wrapper bg-transparent overflow-hidden">
+        <!-- Non-Scrolling Document Iframe in Lower Right Quadrant -->
+        <div class="doc-frame-wrapper bg-transparent overflow-hidden pointer-events-none">
             <iframe 
                 src="https://docs.google.com/document/d/e/2PACX-1vSYuF-hfjcDpQzWkFOMOb1VqUjWHPVLO8lmknbfISgoTcUX12uVmBsMt0p_HKLH4u5rR0RvM-aL0pGo/pub?embedded=true"
-                class="w-full h-full border-0 bg-transparent"
+                class="w-full h-full border-0 bg-transparent pointer-events-none"
+                scrolling="no"
+                style="overflow: hidden; pointer-events: none;"
                 title="Embedded Google Document">
             </iframe>
         </div>
