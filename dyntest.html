@@ -108,7 +108,6 @@
             <!-- Background Image -->
             <img 
                 id="bg-image" 
-                src="https://johnk-cap.github.io/web-aids/red2.jpg" 
                 alt="Background" 
                 class="w-full h-full block object-fill pointer-events-none"
             />
@@ -117,14 +116,14 @@
             <div class="doc-frame-wrapper bg-transparent overflow-hidden pointer-events-none">
                 <div class="sub-frame-container">
                     <iframe 
-                        src="https://docs.google.com/document/d/e/2PACX-1vS8Vhyfm1nG3NYtsJ-cN2fvy4oLzH73A_B8IiZUtR37sb5lo1MNz5aGd6-1-JNucIZ5hq4WFtU7rTrQ/pub?embedded=true"
+                        id="left-frame"
                         scrolling="no"
                         title="Embedded Google Document 1">
                     </iframe>
                 </div>
                 <div class="sub-frame-container">
                     <iframe 
-                        src="https://docs.google.com/document/d/e/2PACX-1vQ8ZhCN6Wf6yO5-uEHtVpVWTPMg0kCDEs6c7QiCzWHtK0YWxnhP50zq_Rt9jDzD7y6Re_evsRHcuNm4/pub?embedded=true"
+                        id="right-frame"
                         scrolling="no"
                         title="Embedded Google Document 2">
                     </iframe>
@@ -138,7 +137,39 @@
             const bgImg = document.getElementById('bg-image');
             const imgContainer = document.getElementById('image-container');
             const viewportWrapper = document.getElementById('viewport-wrapper');
+            const leftFrame = document.getElementById('left-frame');
+            const rightFrame = document.getElementById('right-frame');
             
+            // Configuration dictionary for URL mapping
+            const defaultDocUrl = "https://docs.google.com/document/d/e/2PACX-1vS8Vhyfm1nG3NYtsJ-cN2fvy4oLzH73A_B8IiZUtR37sb5lo1MNz5aGd6-1-JNucIZ5hq4WFtU7rTrQ/pub?embedded=true";
+            const docConfig = {
+                "red1": { left: "URL_FOR_RED1_LEFT", right: "URL_FOR_RED1_RIGHT" },
+                "red2": { left: defaultDocUrl, right: defaultDocUrl },
+                "red3": { left: "URL_FOR_RED3_LEFT", right: "URL_FOR_RED3_RIGHT" },
+                "red4": { left: "URL_FOR_RED4_LEFT", right: "URL_FOR_RED4_RIGHT" },
+                "red5": { left: "URL_FOR_RED5_LEFT", right: "URL_FOR_RED5_RIGHT" }
+            };
+
+            // Parse query string for ?red1, ?red2, etc. or ?id=red1
+            let pageId = "red2"; // Fallback default
+            const params = new URLSearchParams(window.location.search);
+            
+            if (params.has("id") && docConfig[params.get("id")]) {
+                pageId = params.get("id");
+            } else {
+                for (const key of Object.keys(docConfig)) {
+                    if (params.has(key)) {
+                        pageId = key;
+                        break;
+                    }
+                }
+            }
+
+            // Apply dynamic sources based on parsed ID
+            bgImg.src = `https://johnk-cap.github.io/web-aids/${pageId}.jpg`;
+            leftFrame.src = docConfig[pageId].left;
+            rightFrame.src = docConfig[pageId].right;
+
             let naturalWidth = 0;
             let naturalHeight = 0;
 
