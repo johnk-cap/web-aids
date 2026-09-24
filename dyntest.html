@@ -9,6 +9,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
+    <!-- Auto-Reload every 120 seconds (2 minutes) -->
+    <meta http-equiv="refresh" content="120">
+
     <title>Schedule Display</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,7 +26,7 @@
             background-color: #000000;
         }
 
-        /* Root viewport container for optional mobile rotation */
+        /* Root viewport container for optional mobile rotation and fade-in */
         #viewport-wrapper {
             position: absolute;
             top: 0;
@@ -34,6 +37,15 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            
+            /* Initial state for fade-in */
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        /* Class added via JS once layout and image are ready */
+        #viewport-wrapper.loaded {
+            opacity: 1;
         }
 
         /* 90-degree clockwise rotation styling for mobile devices */
@@ -142,15 +154,24 @@
             
             // Configuration dictionary for URL mapping
             const defaultDocUrl = "https://docs.google.com/document/d/e/2PACX-1vS8Vhyfm1nG3NYtsJ-cN2fvy4oLzH73A_B8IiZUtR37sb5lo1MNz5aGd6-1-JNucIZ5hq4WFtU7rTrQ/pub?embedded=true";
+            
+            // Expanded configuration supporting red1-red5 and blue1-blue5
             const docConfig = {
                 "red1": { left: "https://docs.google.com/document/d/e/2PACX-1vQPgfp_QHRXqqKf3OeJtzqfTi2p7IqhhaOkZL1mzCybjlHbLimE0FfQpw0OhQAVUzEdcBF5yyAY8QGp/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vRyjOKWi47QF_RW5hV5GbYKMR5jR5FiRZblpKYg0EeaK8PTclvJmttGYj9AynIp2OZQV4yZZ1Ob6hNB/pub?embedded=true" },
                 "red2": { left: "https://docs.google.com/document/d/e/2PACX-1vS8Vhyfm1nG3NYtsJ-cN2fvy4oLzH73A_B8IiZUtR37sb5lo1MNz5aGd6-1-JNucIZ5hq4WFtU7rTrQ/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQ8ZhCN6Wf6yO5-uEHtVpVWTPMg0kCDEs6c7QiCzWHtK0YWxnhP50zq_Rt9jDzD7y6Re_evsRHcuNm4/pub?embedded=true" },
                 "red3": { left: "https://docs.google.com/document/d/e/2PACX-1vSImNvWFPls4C61UdOoxkjE860RgTPxq4EfvBhcDRmorwM8ZjTWNwewwk-1Se9gmmJGDpXZ5t-pbuJq/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vTt88ssmt65Bgoa3HxTntMBB58nQ8G9Mm2FFXz153lwtRwLp0pTNWlgfVr8Z8WhJ0QIngbHraH9Cgaf/pub?embedded=true" },
                 "red4": { left: "https://docs.google.com/document/d/e/2PACX-1vR9cnbP8kBMcyAvJuu1Immtb9i5vmWjNfkqu3OhikQQUMAaX5MFJuAL17E4AFNCT6wr1puQZw8d0nfd/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vRP8jTyKyNB88gyV5Cu4aDAmsQQ-2bFPqePHvCw0q2ErYPM73Zr9nG4XRHuebl1UTDY56-DN0EqQsEn/pub?embedded=true" },
-                "red5": { left: "https://docs.google.com/document/d/e/2PACX-1vTj1RVsxOFcWHOcoZjbJ_yDsRdP9aL3lcjIIJmWNZW7YYQ2MPtV5xo77jh3PI1MZL_xvHpJqF_J1vfV/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQe6rgAWVxq5KHniB5QQUIHCm6JnVMA2vbcVQLYMIOnKKZ5Sq96NxKLOq1US_oLrtU-Y97x8ZHaFgis/pub?embedded=true" }
+                "red5": { left: "https://docs.google.com/document/d/e/2PACX-1vTj1RVsxOFcWHOcoZjbJ_yDsRdP9aL3lcjIIJmWNZW7YYQ2MPtV5xo77jh3PI1MZL_xvHpJqF_J1vfV/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQe6rgAWVxq5KHniB5QQUIHCm6JnVMA2vbcVQLYMIOnKKZ5Sq96NxKLOq1US_oLrtU-Y97x8ZHaFgis/pub?embedded=true" },
+                
+                // Blue configurations (currently falling back to default URLs; easily swappable)
+                "blue1": { left: defaultDocUrl, right: defaultDocUrl },
+                "blue2": { left: defaultDocUrl, right: defaultDocUrl },
+                "blue3": { left: defaultDocUrl, right: defaultDocUrl },
+                "blue4": { left: defaultDocUrl, right: defaultDocUrl },
+                "blue5": { left: defaultDocUrl, right: defaultDocUrl }
             };
 
-            // Parse query string for ?red1, ?red2, etc. or ?id=red1
+            // Parse query string for ?red1, ?blue1, etc. or ?id=red1
             let pageId = "red2"; // Fallback default
             const params = new URLSearchParams(window.location.search);
             
@@ -223,6 +244,9 @@
                 naturalWidth = bgImg.naturalWidth || 1920;
                 naturalHeight = bgImg.naturalHeight || 1080;
                 updateLayout();
+                
+                // Trigger the fade-in effect smoothly once layout is calculated
+                viewportWrapper.classList.add('loaded');
             }
 
             if (bgImg.complete && bgImg.naturalWidth) {
