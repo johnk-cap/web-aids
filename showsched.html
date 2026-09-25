@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- No-cache Meta Tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Auto-Reload every 120 seconds (2 minutes) -->
+    <meta http-equiv="refresh" content="120">
+
+    <title>Schedule Display</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #000000;
+        }
+
+        /* Root viewport container for optional mobile rotation and fade-in */
+        #viewport-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            
+            /* Initial state for fade-in */
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        /* Class added via JS once layout and image are ready */
+        #viewport-wrapper.loaded {
+            opacity: 1;
+        }
+
+        /* 90-degree clockwise rotation styling for mobile devices */
+        .is-mobile-rotated {
+            width: 100vh !important;
+            height: 100vw !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) rotate(90deg);
+            transform-origin: center center;
+        }
+
+        /* Container that dynamically scales to match image dimensions */
+        #image-container {
+            position: relative;
+            overflow: hidden;
+            background-color: transparent;
+        }
+
+        /* 
+            Positioned in the Top-Left Quadrant of the Top-Right Quadrant
+            (top: 0%, left: 50%, width: 25%, height: 25%)
+        */
+        .date-display-wrapper {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 25%;
+            height: 25%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            text-align: center;
+            container-type: size;
+            z-index: 10;
+        }
+
+        .day-text {
+            color: #000000;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-weight: 800;
+            font-size: 14cqw;
+            line-height: 1.15;
+            text-shadow: 0 1px 3px rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.02em;
+        }
+
+        .date-text {
+            color: #000000;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-weight: 700;
+            font-size: 11cqw;
+            line-height: 1.15;
+            text-shadow: 0 1px 3px rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.05em;
+        }
+
+        /* Frame sized 15% smaller than 50% quadrant (42.5% x 45.5%) 
+           Positioned at bottom: 7.5%, right: 5.0% */
+        .doc-frame-wrapper {
+            position: absolute;
+            bottom: 7.5%;
+            right: 5.0%;
+            width: 42.5%;
+            height: 45.5%;
+            overflow: hidden;
+            pointer-events: none; /* Completely blocks mouse wheel, touch drag, and click events */
+            display: flex;
+            flex-direction: row;
+            gap: 2%;
+        }
+
+        .sub-frame-container {
+            width: 49%;
+            height: 100%;
+            position: relative;
+            container-type: size;
+            overflow: hidden;
+        }
+
+        /* 
+            By giving the iframe a fixed internal base dimension (800px x 1800px) 
+            and scaling it via dynamic transform relative to container width (cqw), 
+            the document text scales like an image—preserving a fixed line layout.
+        */
+        .sub-frame-container iframe {
+            width: 800px;
+            height: 1800px;
+            border: 0;
+            background-color: transparent;
+            overflow: hidden;
+            pointer-events: none;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+            transform-origin: top left;
+            transform: scale(calc(100cqw / 800));
+        }
+
+        .sub-frame-container iframe::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex items-center justify-center overflow-hidden bg-black select-none">
+
+    <!-- Root Viewport Wrapper -->
+    <div id="viewport-wrapper">
+        <!-- Image Wrapper Container -->
+        <div id="image-container" class="relative">
+            <!-- Background Image -->
+            <img 
+                id="bg-image" 
+                alt="Background" 
+                class="w-full h-full block object-fill pointer-events-none"
+            />
+
+            <!-- Dynamic Date Display in Top-Left Quadrant of Top-Right Quadrant -->
+            <div id="date-container" class="date-display-wrapper">
+                <div id="day-of-week" class="day-text"></div>
+                <div id="formatted-date" class="date-text"></div>
+            </div>
+
+            <!-- Non-Scrolling Document Iframe in Lower Right Quadrant -->
+            <div class="doc-frame-wrapper bg-transparent overflow-hidden pointer-events-none">
+                <div class="sub-frame-container">
+                    <iframe 
+                        id="left-frame"
+                        scrolling="no"
+                        title="Embedded Google Document 1">
+                    </iframe>
+                </div>
+                <div class="sub-frame-container">
+                    <iframe 
+                        id="right-frame"
+                        scrolling="no"
+                        title="Embedded Google Document 2">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const bgImg = document.getElementById('bg-image');
+            const imgContainer = document.getElementById('image-container');
+            const viewportWrapper = document.getElementById('viewport-wrapper');
+            const leftFrame = document.getElementById('left-frame');
+            const rightFrame = document.getElementById('right-frame');
+            const dayOfWeekEl = document.getElementById('day-of-week');
+            const formattedDateEl = document.getElementById('formatted-date');
+            
+            const docConfig = {
+                "red1": { left: "https://docs.google.com/document/d/e/2PACX-1vQPgfp_QHRXqqKf3OeJtzqfTi2p7IqhhaOkZL1mzCybjlHbLimE0FfQpw0OhQAVUzEdcBF5yyAY8QGp/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vRyjOKWi47QF_RW5hV5GbYKMR5jR5FiRZblpKYg0EeaK8PTclvJmttGYj9AynIp2OZQV4yZZ1Ob6hNB/pub?embedded=true" },
+                "red2": { left: "https://docs.google.com/document/d/e/2PACX-1vS8Vhyfm1nG3NYtsJ-cN2fvy4oLzH73A_B8IiZUtR37sb5lo1MNz5aGd6-1-JNucIZ5hq4WFtU7rTrQ/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQ8ZhCN6Wf6yO5-uEHtVpVWTPMg0kCDEs6c7QiCzWHtK0YWxnhP50zq_Rt9jDzD7y6Re_evsRHcuNm4/pub?embedded=true" },
+                "red3": { left: "https://docs.google.com/document/d/e/2PACX-1vSImNvWFPls4C61UdOoxkjE860RgTPxq4EfvBhcDRmorwM8ZjTWNwewwk-1Se9gmmJGDpXZ5t-pbuJq/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vTt88ssmt65Bgoa3HxTntMBB58nQ8G9Mm2FFXz153lwtRwLp0pTNWlgfVr8Z8WhJ0QIngbHraH9Cgaf/pub?embedded=true" },
+                "red4": { left: "https://docs.google.com/document/d/e/2PACX-1vR9cnbP8kBMcyAvJuu1Immtb9i5vmWjNfkqu3OhikQQUMAaX5MFJuAL17E4AFNCT6wr1puQZw8d0nfd/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vRP8jTyKyNB88gyV5Cu4aDAmsQQ-2bFPqePHvCw0q2ErYPM73Zr9nG4XRHuebl1UTDY56-DN0EqQsEn/pub?embedded=true" },
+                "red5": { left: "https://docs.google.com/document/d/e/2PACX-1vTj1RVsxOFcWHOcoZjbJ_yDsRdP9aL3lcjIIJmWNZW7YYQ2MPtV5xo77jh3PI1MZL_xvHpJqF_J1vfV/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQe6rgAWVxq5KHniB5QQUIHCm6JnVMA2vbcVQLYMIOnKKZ5Sq96NxKLOq1US_oLrtU-Y97x8ZHaFgis/pub?embedded=true" },
+                
+                "blue1": { left: "https://docs.google.com/document/d/e/2PACX-1vQVd3NFOy8P_3N6qPRap5F9PwPJm_Ya1ZGl1yeGyVWZjBjau-sXnq2MsqRvBfb-FvgDQadeAyYkIHWv/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQpnCYi8h2SxeSFuX3T_1VRPBtHXA1C3nQl5UVIGn-78-PEZB2YpwNE5Qe7Z8iEZt92jIdSw_FRklIs/pub?embedded=true" },
+                "blue2": { left: "https://docs.google.com/document/d/e/2PACX-1vREYDM6YQ-A3nnKNyFQNT1tKBXy18Yxj1ohKOtOMVyCUOsKaMyHyP8WEifduSZaho9oWh8mADR-pQXP/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vT8t0Lb3HHOtkPUxwibkQ0f7rk5iotOJZhIAlhzUa8zpCPAzXP6iqC4AnDw8N3-UwdMqaRs4p3d6OU9/pub?embedded=true" },
+                "blue3": { left: "https://docs.google.com/document/d/e/2PACX-1vR2LS3cqiqK0IH29nC2333HM0Uo6MMBS-X20f0dQx_yurkoVK16SdIi8ix0H-ME5g-uEk7PHpVPlqI-/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vR8Gln1y4p2ttmL0DZWeznDVIWBD_VEvgFVlSAD9boUNogpcgVaqmrKA2eTZbF60pOUM4trny8C28pf/pub?embedded=true" },
+                "blue4": { left: "https://docs.google.com/document/d/e/2PACX-1vQLuD7ZRk2M-Ph90cDBcG76583do5Tt4FETjewYd29gGJcWmhKKkDODwrnDl7mP3azltmZ7nL2zcxkC/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vTv9YZJ-RshNGIWmX9n3M9yAgaNsr2ZIDLG5vhGqKtz4Cji24f_b0G1sFUDciLbJotDn2zGycS3jDqj/pub?embedded=true" },
+                "blue5": { left: "https://docs.google.com/document/d/e/2PACX-1vTj1RVsxOFcWHOcoZjbJ_yDsRdP9aL3lcjIIJmWNZW7YYQ2MPtV5xo77jh3PI1MZL_xvHpJqF_J1vfV/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQe6rgAWVxq5KHniB5QQUIHCm6JnVMA2vbcVQLYMIOnKKZ5Sq96NxKLOq1US_oLrtU-Y97x8ZHaFgis/pub?embedded=true" }
+            };
+
+            // Parse US Military Date format (e.g. 25 SEP 26 or 25-SEP-26)
+            function parseMilitaryDate(str) {
+                if (!str) return null;
+                const decoded = decodeURIComponent(str).trim();
+                const match = decoded.match(/^(\d{1,2})[\s\-]?([a-zA-Z]{3})[\s\-]?(\d{2}|\d{4})$/);
+                if (!match) return null;
+
+                const day = parseInt(match[1], 10);
+                const monthStr = match[2].toUpperCase();
+                let year = parseInt(match[3], 10);
+                if (year < 100) year += 2000;
+
+                const months = {
+                    "JAN": 0, "FEB": 1, "MAR": 2, "APR": 3, "MAY": 4, "JUN": 5,
+                    "JUL": 6, "AUG": 7, "SEP": 8, "OCT": 9, "NOV": 10, "DEC": 11
+                };
+
+                if (!(monthStr in months)) return null;
+                const monthIndex = months[monthStr];
+
+                const dateObj = new Date(year, monthIndex, day);
+                if (isNaN(dateObj.getTime())) return null;
+
+                const dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                const formattedDate = `${String(day).padStart(2, '0')} ${monthStr} ${String(year).slice(-2)}`;
+
+                return {
+                    dayOfWeek: dayOfWeek,
+                    dateStr: formattedDate
+                };
+            }
+
+            function getTodayMilitaryStr() {
+                const today = new Date();
+                const day = String(today.getDate()).padStart(2, '0');
+                const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                const month = months[today.getMonth()];
+                const year = String(today.getFullYear()).slice(-2);
+                return `${day} ${month} ${year}`;
+            }
+
+            // Parse query string for ?red1, ?blue1, etc. or ?id=red1 and ?datestr=...
+            let pageId = "red2"; // Fallback default
+            const params = new URLSearchParams(window.location.search);
+            
+            if (params.has("id") && docConfig[params.get("id")]) {
+                pageId = params.get("id");
+            } else {
+                for (const key of Object.keys(docConfig)) {
+                    if (params.has(key)) {
+                        pageId = key;
+                        break;
+                    }
+                }
+            }
+
+            // Parse date string parameter
+            const datestrParam = params.get("datestr");
+            const dateData = parseMilitaryDate(datestrParam) || parseMilitaryDate(getTodayMilitaryStr());
+
+            if (dateData) {
+                dayOfWeekEl.textContent = dateData.dayOfWeek;
+                formattedDateEl.textContent = dateData.dateStr;
+            }
+
+            // Apply dynamic sources based on parsed ID
+            bgImg.src = `https://johnk-cap.github.io/web-aids/${pageId}.jpg`;
+            leftFrame.src = docConfig[pageId].left;
+            rightFrame.src = docConfig[pageId].right;
+
+            let naturalWidth = 0;
+            let naturalHeight = 0;
+
+            // Detect mobile devices via userAgent or touch points / screen size criteria
+            function isMobileDevice() {
+                const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+                const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+                const isTouchMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0) && (window.innerWidth <= 1024 || window.innerHeight <= 1024);
+                return mobileRegex.test(userAgent) || isTouchMobile;
+            }
+
+            const isMobile = isMobileDevice();
+
+            if (isMobile) {
+                viewportWrapper.classList.add('is-mobile-rotated');
+            }
+
+            function updateLayout() {
+                if (!naturalWidth || !naturalHeight) return;
+
+                // When rotated 90deg on mobile, the effective width and height are swapped
+                let vw = window.innerWidth;
+                let vh = window.innerHeight;
+
+                if (isMobile) {
+                    vw = window.innerHeight;
+                    vh = window.innerWidth;
+                }
+
+                const imgAspect = naturalWidth / naturalHeight;
+                const screenAspect = vw / vh;
+
+                let renderedW, renderedH;
+
+                if (screenAspect > imgAspect) {
+                    // Viewport is wider than image aspect ratio -> constrained by height
+                    renderedH = vh;
+                    renderedW = vh * imgAspect;
+                } else {
+                    // Viewport is taller than image aspect ratio -> constrained by width
+                    renderedW = vw;
+                    renderedH = vw / imgAspect;
+                }
+
+                // Apply calculated dimensions to the container
+                imgContainer.style.width = Math.floor(renderedW) + 'px';
+                imgContainer.style.height = Math.floor(renderedH) + 'px';
+            }
+
+            function onImageLoad() {
+                naturalWidth = bgImg.naturalWidth || 1920;
+                naturalHeight = bgImg.naturalHeight || 1080;
+                updateLayout();
+                
+                // Trigger the fade-in effect smoothly once layout is calculated
+                viewportWrapper.classList.add('loaded');
+            }
+
+            if (bgImg.complete && bgImg.naturalWidth) {
+                onImageLoad();
+            } else {
+                bgImg.addEventListener('load', onImageLoad);
+            }
+
+            window.addEventListener('resize', updateLayout);
+            window.addEventListener('orientationchange', updateLayout);
+        })();
+    </script>
+
+</body>
+</html>
