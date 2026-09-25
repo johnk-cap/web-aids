@@ -65,6 +65,46 @@
             background-color: transparent;
         }
 
+        /* 
+            Positioned in the Top-Left Quadrant of the Top-Right Quadrant
+            (top: 0%, left: 50%, width: 25%, height: 25%)
+        */
+        .date-display-wrapper {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 25%;
+            height: 25%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            text-align: center;
+            container-type: size;
+            z-index: 10;
+        }
+
+        .day-text {
+            color: #000000;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-weight: 800;
+            font-size: 14cqw;
+            line-height: 1.15;
+            text-shadow: 0 1px 3px rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.02em;
+        }
+
+        .date-text {
+            color: #000000;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-weight: 700;
+            font-size: 11cqw;
+            line-height: 1.15;
+            text-shadow: 0 1px 3px rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.05em;
+        }
+
         /* Frame sized 15% smaller than 50% quadrant (42.5% x 45.5%) 
            Positioned at bottom: 7.5%, right: 5.0% */
         .doc-frame-wrapper {
@@ -89,9 +129,9 @@
         }
 
         /* 
-           By giving the iframe a fixed internal base dimension (800px x 1800px) 
-           and scaling it via dynamic transform relative to container width (cqw), 
-           the document text scales like an image—preserving a fixed line layout.
+            By giving the iframe a fixed internal base dimension (800px x 1800px) 
+            and scaling it via dynamic transform relative to container width (cqw), 
+            the document text scales like an image—preserving a fixed line layout.
         */
         .sub-frame-container iframe {
             width: 800px;
@@ -124,6 +164,12 @@
                 class="w-full h-full block object-fill pointer-events-none"
             />
 
+            <!-- Dynamic Date Display in Top-Left Quadrant of Top-Right Quadrant -->
+            <div id="date-container" class="date-display-wrapper">
+                <div id="day-of-week" class="day-text"></div>
+                <div id="formatted-date" class="date-text"></div>
+            </div>
+
             <!-- Non-Scrolling Document Iframe in Lower Right Quadrant -->
             <div class="doc-frame-wrapper bg-transparent overflow-hidden pointer-events-none">
                 <div class="sub-frame-container">
@@ -151,11 +197,9 @@
             const viewportWrapper = document.getElementById('viewport-wrapper');
             const leftFrame = document.getElementById('left-frame');
             const rightFrame = document.getElementById('right-frame');
+            const dayOfWeekEl = document.getElementById('day-of-week');
+            const formattedDateEl = document.getElementById('formatted-date');
             
-            // Configuration dictionary for URL mapping
-            const defaultDocUrl = "https://docs.google.com/document/d/e/2PACX-1vS8Vhyfm1nG3NYtsJ-cN2fvy4oLzH73A_B8IiZUtR37sb5lo1MNz5aGd6-1-JNucIZ5hq4WFtU7rTrQ/pub?embedded=true";
-            
-            // Expanded configuration supporting red1-red5 and blue1-blue5
             const docConfig = {
                 "red1": { left: "https://docs.google.com/document/d/e/2PACX-1vQPgfp_QHRXqqKf3OeJtzqfTi2p7IqhhaOkZL1mzCybjlHbLimE0FfQpw0OhQAVUzEdcBF5yyAY8QGp/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vRyjOKWi47QF_RW5hV5GbYKMR5jR5FiRZblpKYg0EeaK8PTclvJmttGYj9AynIp2OZQV4yZZ1Ob6hNB/pub?embedded=true" },
                 "red2": { left: "https://docs.google.com/document/d/e/2PACX-1vS8Vhyfm1nG3NYtsJ-cN2fvy4oLzH73A_B8IiZUtR37sb5lo1MNz5aGd6-1-JNucIZ5hq4WFtU7rTrQ/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQ8ZhCN6Wf6yO5-uEHtVpVWTPMg0kCDEs6c7QiCzWHtK0YWxnhP50zq_Rt9jDzD7y6Re_evsRHcuNm4/pub?embedded=true" },
@@ -163,7 +207,6 @@
                 "red4": { left: "https://docs.google.com/document/d/e/2PACX-1vR9cnbP8kBMcyAvJuu1Immtb9i5vmWjNfkqu3OhikQQUMAaX5MFJuAL17E4AFNCT6wr1puQZw8d0nfd/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vRP8jTyKyNB88gyV5Cu4aDAmsQQ-2bFPqePHvCw0q2ErYPM73Zr9nG4XRHuebl1UTDY56-DN0EqQsEn/pub?embedded=true" },
                 "red5": { left: "https://docs.google.com/document/d/e/2PACX-1vTj1RVsxOFcWHOcoZjbJ_yDsRdP9aL3lcjIIJmWNZW7YYQ2MPtV5xo77jh3PI1MZL_xvHpJqF_J1vfV/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQe6rgAWVxq5KHniB5QQUIHCm6JnVMA2vbcVQLYMIOnKKZ5Sq96NxKLOq1US_oLrtU-Y97x8ZHaFgis/pub?embedded=true" },
                 
-                // Blue configurations (currently falling back to default URLs; easily swappable)
                 "blue1": { left: "https://docs.google.com/document/d/e/2PACX-1vQVd3NFOy8P_3N6qPRap5F9PwPJm_Ya1ZGl1yeGyVWZjBjau-sXnq2MsqRvBfb-FvgDQadeAyYkIHWv/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQpnCYi8h2SxeSFuX3T_1VRPBtHXA1C3nQl5UVIGn-78-PEZB2YpwNE5Qe7Z8iEZt92jIdSw_FRklIs/pub?embedded=true" },
                 "blue2": { left: "https://docs.google.com/document/d/e/2PACX-1vREYDM6YQ-A3nnKNyFQNT1tKBXy18Yxj1ohKOtOMVyCUOsKaMyHyP8WEifduSZaho9oWh8mADR-pQXP/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vT8t0Lb3HHOtkPUxwibkQ0f7rk5iotOJZhIAlhzUa8zpCPAzXP6iqC4AnDw8N3-UwdMqaRs4p3d6OU9/pub?embedded=true" },
                 "blue3": { left: "https://docs.google.com/document/d/e/2PACX-1vR2LS3cqiqK0IH29nC2333HM0Uo6MMBS-X20f0dQx_yurkoVK16SdIi8ix0H-ME5g-uEk7PHpVPlqI-/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vR8Gln1y4p2ttmL0DZWeznDVIWBD_VEvgFVlSAD9boUNogpcgVaqmrKA2eTZbF60pOUM4trny8C28pf/pub?embedded=true" },
@@ -171,7 +214,48 @@
                 "blue5": { left: "https://docs.google.com/document/d/e/2PACX-1vTj1RVsxOFcWHOcoZjbJ_yDsRdP9aL3lcjIIJmWNZW7YYQ2MPtV5xo77jh3PI1MZL_xvHpJqF_J1vfV/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQe6rgAWVxq5KHniB5QQUIHCm6JnVMA2vbcVQLYMIOnKKZ5Sq96NxKLOq1US_oLrtU-Y97x8ZHaFgis/pub?embedded=true" }
             };
 
-            // Parse query string for ?red1, ?blue1, etc. or ?id=red1
+            // Parse US Military Date format (e.g. 25 SEP 26 or 25-SEP-26)
+            function parseMilitaryDate(str) {
+                if (!str) return null;
+                const decoded = decodeURIComponent(str).trim();
+                const match = decoded.match(/^(\d{1,2})[\s\-]?([a-zA-Z]{3})[\s\-]?(\d{2}|\d{4})$/);
+                if (!match) return null;
+
+                const day = parseInt(match[1], 10);
+                const monthStr = match[2].toUpperCase();
+                let year = parseInt(match[3], 10);
+                if (year < 100) year += 2000;
+
+                const months = {
+                    "JAN": 0, "FEB": 1, "MAR": 2, "APR": 3, "MAY": 4, "JUN": 5,
+                    "JUL": 6, "AUG": 7, "SEP": 8, "OCT": 9, "NOV": 10, "DEC": 11
+                };
+
+                if (!(monthStr in months)) return null;
+                const monthIndex = months[monthStr];
+
+                const dateObj = new Date(year, monthIndex, day);
+                if (isNaN(dateObj.getTime())) return null;
+
+                const dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                const formattedDate = `${String(day).padStart(2, '0')} ${monthStr} ${String(year).slice(-2)}`;
+
+                return {
+                    dayOfWeek: dayOfWeek,
+                    dateStr: formattedDate
+                };
+            }
+
+            function getTodayMilitaryStr() {
+                const today = new Date();
+                const day = String(today.getDate()).padStart(2, '0');
+                const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                const month = months[today.getMonth()];
+                const year = String(today.getFullYear()).slice(-2);
+                return `${day} ${month} ${year}`;
+            }
+
+            // Parse query string for ?red1, ?blue1, etc. or ?id=red1 and ?datestr=...
             let pageId = "red2"; // Fallback default
             const params = new URLSearchParams(window.location.search);
             
@@ -184,6 +268,15 @@
                         break;
                     }
                 }
+            }
+
+            // Parse date string parameter
+            const datestrParam = params.get("datestr");
+            const dateData = parseMilitaryDate(datestrParam) || parseMilitaryDate(getTodayMilitaryStr());
+
+            if (dateData) {
+                dayOfWeekEl.textContent = dateData.dayOfWeek;
+                formattedDateEl.textContent = dateData.dateStr;
             }
 
             // Apply dynamic sources based on parsed ID
