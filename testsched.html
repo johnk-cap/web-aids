@@ -154,13 +154,15 @@
             Zoom & Crop right-hand column of Google Doc in rightmost frame:
             Shifts iframe left by 100cqw (50% of rendered width) and doubles scale factor
         */
-        #right-frame {
-            position: absolute;
-            top: 0;
-            left: -366cqw;
-            transform: scale(calc(200cqw / 800));
-        }
-    </style>
+     #right-frame {
+         position: absolute;
+         top: 0;
+         width: 500px !important;
+         height: 1800px;
+         left: -100cqw;
+         transform-origin: top left;
+         transform: scale(calc(200cqw / 500));
+     }    </style>
 </head>
 <body class="w-screen h-screen flex items-center justify-center overflow-hidden bg-black select-none">
 
