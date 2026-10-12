@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +9,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <!-- Redirect to scheddis.html every 120 seconds (2 minutes) -->
+    <!-- Auto-Reload every 120 seconds (2 minutes) -->
     <meta http-equiv="refresh" content="120; url=scheddis.html">
 
     <title>Schedule Display</title>
@@ -127,7 +129,9 @@
         }
 
         /* 
-            Standard left frame virtual width and scaling
+            By giving the iframe a fixed internal base dimension (800px x 1800px) 
+            and scaling it via dynamic transform relative to container width (cqw), 
+            the document text scales like an image—preserving a fixed line layout.
         */
         .sub-frame-container iframe {
             width: 800px;
@@ -139,22 +143,6 @@
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
             transform-origin: top left;
-            transform: scale(calc(100cqw / 800));
-        }
-
-        /* 
-            Rightmost iframe: double width (1600px) anchored to top-right corner.
-            Crops off the left 50% (left column) and zooms/scales the right 50% 
-            (top-right column) to fill 100% of the sub-frame.
-        */
-        #right-frame {
-            position: absolute;
-            top: 0;
-            right: 0;
-            left: auto;
-            width: 1600px;
-            height: 1800px;
-            transform-origin: top right;
             transform: scale(calc(100cqw / 800));
         }
 
