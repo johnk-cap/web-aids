@@ -9,8 +9,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <!-- Auto-Reload every 120 seconds (2 minutes) -->
-    <meta http-equiv="refresh" content="600; url=scheddis.html">
+    <!-- Auto-Reload every 120 seconds (2 minutes) with redirect to entry point -->
+    <meta http-equiv="refresh" content="120; url=scheddis.html">
 
     <title>Schedule Display</title>
 
@@ -26,7 +26,7 @@
             background-color: #000000;
         }
 
-        /* Root viewport container for optional mobile rotation and fade-in */
+        /* Root viewport container for optional mobile rotation, desktop zoom, and fade-in */
         #viewport-wrapper {
             position: absolute;
             top: 0;
@@ -56,6 +56,11 @@
             left: 50% !important;
             transform: translate(-50%, -50%) rotate(90deg);
             transform-origin: center center;
+        }
+
+        /* CSS zoom applied to non-mobile (desktop/kiosk) clients */
+        .is-desktop-zoomed {
+            zoom: 120%;
         }
 
         /* Container that dynamically scales to match image dimensions */
@@ -149,21 +154,7 @@
         .sub-frame-container iframe::-webkit-scrollbar {
             display: none; /* Chrome, Safari, Opera */
         }
-
-        /* 
-            Zoom & Crop right-hand column of Google Doc in rightmost frame:
-            Shifts iframe left by 100cqw (50% of rendered width) and doubles scale factor
-        */
-     /* Shift Vertically to Show Column 2 (Google Docs Layout Columns) */
-#right-frame {
-    position: absolute;
-    top: -600px; /* Adjust this value up/down to align the top of Column 2 */
-    left: 0;
-    width: 800px;
-    height: 1800px;
-    transform-origin: top left;
-    transform: scale(calc(100cqw / 800));
-}    </style>
+    </style>
 </head>
 <body class="w-screen h-screen flex items-center justify-center overflow-hidden bg-black select-none">
 
@@ -216,8 +207,8 @@
             
             const docConfig = {
                 "red1": { left: "https://docs.google.com/document/d/e/2PACX-1vQPgfp_QHRXqqKf3OeJtzqfTi2p7IqhhaOkZL1mzCybjlHbLimE0FfQpw0OhQAVUzEdcBF5yyAY8QGp/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vRyjOKWi47QF_RW5hV5GbYKMR5jR5FiRZblpKYg0EeaK8PTclvJmttGYj9AynIp2OZQV4yZZ1Ob6hNB/pub?embedded=true" },
-                "red2": { left: "https://docs.google.com/document/d/e/2PACX-1vSZCiRjDFQlEvfpbcLYVdvC_IArpJDJoQaWPUmXKCsfea0XUl5CcwTWKeVnkMUL0fqBaIeaxO8DLDwo/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vSZCiRjDFQlEvfpbcLYVdvC_IArpJDJoQaWPUmXKCsfea0XUl5CcwTWKeVnkMUL0fqBaIeaxO8DLDwo/pub?embedded=true" },
-                "red3": { left: "https://docs.google.com/presentation/d/e/2PACX-1vRsEifkP1Puxmzn_w2GyzyuPu_kMjF64ZgQeYQvvacNAK-yg7m1r-dHlQcUqfhTz-j4ABDojzC2HLSI/pubembed?start=true&loop=true&delayms=60000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true", right: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTTTjjND4oBDwdpWCi2c1yBZW0ve_4XtSmy7MIAdBwdqDOHBPloWa6QRTTPvvAYgMWdPhLh_Vd8SPwU/pubhtml?gid=2047820485&amp;single=true&amp;widget=true&amp;headers=false" },
+                "red2": { left: "https://docs.google.com/document/d/e/2PACX-1vS8Vhyfm1nG3NYtsJ-cN2fvy4oLzH73A_B8IiZUtR37sb5lo1MNz5aGd6-1-JNucIZ5hq4WFtU7rTrQ/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQ8ZhCN6Wf6yO5-uEHtVpVWTPMg0kCDEs6c7QiCzWHtK0YWxnhP50zq_Rt9jDzD7y6Re_evsRHcuNm4/pub?embedded=true" },
+                "red3": { left: "https://docs.google.com/document/d/e/2PACX-1vSImNvWFPls4C61UdOoxkjE860RgTPxq4EfvBhcDRmorwM8ZjTWNwewwk-1Se9gmmJGDpXZ5t-pbuJq/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vTt88ssmt65Bgoa3HxTntMBB58nQ8G9Mm2FFXz153lwtRwLp0pTNWlgfVr8Z8WhJ0QIngbHraH9Cgaf/pub?embedded=true" },
                 "red4": { left: "https://docs.google.com/document/d/e/2PACX-1vR9cnbP8kBMcyAvJuu1Immtb9i5vmWjNfkqu3OhikQQUMAaX5MFJuAL17E4AFNCT6wr1puQZw8d0nfd/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vRP8jTyKyNB88gyV5Cu4aDAmsQQ-2bFPqePHvCw0q2ErYPM73Zr9nG4XRHuebl1UTDY56-DN0EqQsEn/pub?embedded=true" },
                 "red5": { left: "https://docs.google.com/document/d/e/2PACX-1vTj1RVsxOFcWHOcoZjbJ_yDsRdP9aL3lcjIIJmWNZW7YYQ2MPtV5xo77jh3PI1MZL_xvHpJqF_J1vfV/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQe6rgAWVxq5KHniB5QQUIHCm6JnVMA2vbcVQLYMIOnKKZ5Sq96NxKLOq1US_oLrtU-Y97x8ZHaFgis/pub?embedded=true" },
                 
@@ -311,8 +302,11 @@
 
             const isMobile = isMobileDevice();
 
+            // Conditional branching: rotate on mobile, zoom 120% on desktop/kiosk
             if (isMobile) {
                 viewportWrapper.classList.add('is-mobile-rotated');
+            } else {
+                viewportWrapper.classList.add('is-desktop-zoomed');
             }
 
             function updateLayout() {
