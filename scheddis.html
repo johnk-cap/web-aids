@@ -12,8 +12,28 @@
   <title>Redirecting...</title>
   <script>
     function redirectByMondayAndMonth() {
-      // Check URL parameters for ?target=next
       const urlParams = new URLSearchParams(window.location.search);
+
+      // 1. Detect boolean routing parameter (e.g., ?currix=true or ?curriculum=true)
+      const currixParam = (
+        urlParams.get('currix') || 
+        urlParams.get('curriculum') || 
+        urlParams.get('mode') || 
+        ''
+      ).toLowerCase();
+
+      // Evaluates to true if explicit 'true' / '1', or if ?currix flag exists and isn't 'false'
+      const isCurrix = (
+        currixParam === 'true' || 
+        currixParam === '1' || 
+        currixParam === 'currix' || 
+        (urlParams.has('currix') && currixParam !== 'false')
+      );
+
+      // Select target destination page
+      const targetPage = isCurrix ? 'currix.html' : 'showsched.html';
+
+      // 2. Check URL parameters for ?target=next
       const isNextMonday = urlParams.get('target') === 'next';
 
       const today = new Date();
@@ -38,18 +58,30 @@
       // Determine target Monday's ordinal position (1st through 5th)
       const mondayOrdinal = Math.ceil(targetMonday.getDate() / 7);
 
-      // 1. Construct "id" parameter (e.g., "blue1", "red4")
+      // Construct "id" parameter (e.g., "blue1", "red4")
       const id = `${colorPrefix}${mondayOrdinal}`;
 
-      // 2. Format date in US Military format (DD-MMM-YY, e.g., "28-SEP-26")
+      // Format date in US Military format (DD-MMM-YY, e.g., "28-SEP-26")
       const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
       const dayStr = String(targetMonday.getDate()).padStart(2, '0');
       const monthStr = months[targetMonday.getMonth()];
       const yearStr = String(targetMonday.getFullYear()).slice(-2);
       const datestr = `${dayStr}-${monthStr}-${yearStr}`;
 
-      // Build destination URL with parameters and cache buster
-      const redirectUrl = `showsched.html?id=${id}&datestr=${datestr}&nocache=${Date.now()}`;
+      // Build destination URL query string
+      let redirectParams = `id=${id}&datestr=${datestr}`;
+
+      // Forward FLT / Track parameter if present when routing to currix.html
+      const fltParam = urlParams.get('flt') || urlParams.get('track');
+      if (isCurrix && fltParam) {
+        redirectParams += `&flt=${encodeURIComponent(fltParam)}`;
+      }
+
+      // Append cache buster
+      redirectParams += `&nocache=${Date.now()}`;
+
+      // Build final destination URL
+      const redirectUrl = `${targetPage}?${redirectParams}`;
 
       // Redirect directly without saving redirect page into session history
       window.location.replace(redirectUrl);
