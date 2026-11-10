@@ -64,6 +64,22 @@
         }
 
         /* =========================================================
+           NAVIGATION HOTSPOT: Right Half of Top-Right Quadrant
+           (top: 0%, left: 75%, width: 25%, height: 50%)
+           ========================================================= */
+        .nav-hotspot-right {
+            position: absolute;
+            top: 0;
+            left: 75%;
+            width: 25%;
+            height: 50%;
+            z-index: 30;
+            cursor: pointer;
+            background-color: transparent;
+            display: block;
+        }
+
+        /* =========================================================
            LEFT HALF: Target Document Frame & Interactive Widgets
            ========================================================= */
         .left-half-doc-wrapper {
@@ -225,6 +241,13 @@
                 alt="Background" 
                 class="w-full h-full block object-fill pointer-events-none"
             />
+
+            <!-- Transparent Navigation Hotspot: Right Half of Top-Right Quadrant -->
+            <a 
+                href="scheddis.html?currix=false" 
+                class="nav-hotspot-right" 
+                title="Switch to Schedule Display">
+            </a>
 
             <!-- LEFT HALF: Track Document Frame with Controls -->
             <div class="left-half-doc-wrapper">
