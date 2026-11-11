@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- No-cache Meta Tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <title>Curriculum Display</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #000000;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        /* Root viewport container for optional mobile rotation and fade-in */
+        #viewport-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            
+            /* Initial state for fade-in */
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        /* Class added via JS once layout and image are ready */
+        #viewport-wrapper.loaded {
+            opacity: 1;
+        }
+
+        /* 90-degree clockwise rotation styling for mobile devices */
+        .is-mobile-rotated {
+            width: 100vh !important;
+            height: 100vw !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) rotate(90deg);
+            transform-origin: center center;
+        }
+
+        /* Aspect ratio container scaled dynamically to background image */
+        #image-container {
+            position: relative;
+            overflow: hidden;
+            background-color: transparent;
+        }
+
+        /* =========================================================
+           NAVIGATION HOTSPOT: Right Half of Top-Right Quadrant
+           (top: 0%, left: 75%, width: 25%, height: 50%)
+           ========================================================= */
+        .nav-hotspot-right {
+            position: absolute;
+            top: 0;
+            left: 75%;
+            width: 25%;
+            height: 50%;
+            z-index: 30;
+            cursor: pointer;
+            background-color: transparent;
+            display: block;
+        }
+
+        /* =========================================================
+           LEFT HALF: Target Document Frame & Interactive Widgets
+           ========================================================= */
+        .left-half-doc-wrapper {
+            position: absolute;
+            top: 7.5%;
+            left: 5.0%;
+            width: 42.5%;
+            height: 85.0%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            z-index: 20;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            border-radius: 6px;
+            background-color: #ffffff;
+            transition: top 0.3s ease, left 0.3s ease, width 0.3s ease, height 0.3s ease, z-index 0.3s ease;
+        }
+
+        /* Expanded State: 92% Full View */
+        .left-half-doc-wrapper.is-expanded {
+            top: 4.0% !important;
+            left: 4.0% !important;
+            width: 92.0% !important;
+            height: 92.0% !important;
+            z-index: 50 !important;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .left-frame-widgets {
+            height: 42px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            gap: 8px;
+            border-bottom: 1px solid #333;
+            font-size: 13px;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .widget-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .widget-btn, .widget-select {
+            background-color: #2a2a2a;
+            color: #ffffff;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .widget-btn:hover, .widget-select:hover {
+            background-color: #3d3d3d;
+            border-color: #666;
+        }
+
+        .left-frame-container {
+            flex-grow: 1;
+            width: 100%;
+            position: relative;
+            container-type: size;
+            overflow-y: auto; /* Allows smooth scrolling */
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .left-frame-container iframe {
+            width: 100%;
+            min-height: 100%;
+            height: 1800px;
+            border: 0;
+            background-color: #ffffff;
+            display: block;
+        }
+
+        /* =========================================================
+           RIGHT HALF: Date Display & Fixed Dual Schedule Frames
+           ========================================================= */
+        .date-display-wrapper {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 25%;
+            height: 25%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            text-align: center;
+            container-type: size;
+            z-index: 10;
+        }
+
+        .day-text {
+            color: #000000;
+            font-weight: 800;
+            font-size: 14cqw;
+            line-height: 1.15;
+            text-shadow: 0 1px 3px rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.02em;
+        }
+
+        .date-text {
+            color: #000000;
+            font-weight: 700;
+            font-size: 11cqw;
+            line-height: 1.15;
+            text-shadow: 0 1px 3px rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.05em;
+        }
+
+        .doc-frame-wrapper {
+            position: absolute;
+            bottom: 7.5%;
+            right: 5.0%;
+            width: 42.5%;
+            height: 45.5%;
+            overflow: hidden;
+            pointer-events: none;
+            display: flex;
+            flex-direction: row;
+            gap: 2%;
+        }
+
+        .sub-frame-container {
+            width: 49%;
+            height: 100%;
+            position: relative;
+            container-type: size;
+            overflow: hidden;
+        }
+
+        .sub-frame-container iframe {
+            width: 800px;
+            height: 1800px;
+            border: 0;
+            background-color: transparent;
+            overflow: hidden;
+            pointer-events: none;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            transform-origin: top left;
+            transform: scale(calc(100cqw / 800));
+        }
+
+        .sub-frame-container iframe::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex items-center justify-center overflow-hidden bg-black select-none">
+
+    <!-- Root Viewport Wrapper -->
+    <div id="viewport-wrapper">
+        <!-- Image Wrapper Container -->
+        <div id="image-container" class="relative">
+            <!-- Background Image -->
+            <img 
+                id="bg-image" 
+                alt="Background" 
+                class="w-full h-full block object-fill pointer-events-none"
+            />
+
+            <!-- Transparent Navigation Hotspot: Right Half of Top-Right Quadrant -->
+            <a 
+                href="scheddis.html?currix=false" 
+                class="nav-hotspot-right" 
+                title="Switch to Schedule Display">
+            </a>
+
+            <!-- LEFT HALF: Track Document Frame with Controls -->
+            <div id="left-doc-wrapper" class="left-half-doc-wrapper">
+                <div class="left-frame-widgets">
+                    <div class="widget-group">
+                        <select id="track-select" class="widget-select">
+                            <option value="orientation">Orientation</option>
+                            <option value="india">India</option>
+                            <option value="tango">Tango</option>
+                        </select>
+
+                        <select id="id-select" class="widget-select">
+                            <option value="red1">Red 1</option>
+                            <option value="red2">Red 2</option>
+                            <option value="red3">Red 3</option>
+                            <option value="red4">Red 4</option>
+                            <option value="red5">Red 5</option>
+                            <option value="blue1">Blue 1</option>
+                            <option value="blue2">Blue 2</option>
+                            <option value="blue3">Blue 3</option>
+                            <option value="blue4">Blue 4</option>
+                            <option value="blue5">Blue 5</option>
+                        </select>
+                    </div>
+
+                    <div class="widget-group">
+                        <button id="btn-scroll-up" class="widget-btn" title="Scroll Up">▲</button>
+                        <button id="btn-scroll-down" class="widget-btn" title="Scroll Down">▼</button>
+                        <button id="btn-expand" class="widget-btn font-bold ml-1" title="Expand View (92%)">⤢</button>
+                    </div>
+                </div>
+
+                <div id="left-scroll-container" class="left-frame-container">
+                    <iframe 
+                        id="main-target-frame" 
+                        title="Main Track Target Document">
+                    </iframe>
+                </div>
+            </div>
+
+            <!-- RIGHT HALF TOP: Dynamic Date Display -->
+            <div id="date-container" class="date-display-wrapper">
+                <div id="day-of-week" class="day-text"></div>
+                <div id="formatted-date" class="date-text"></div>
+            </div>
+
+            <!-- RIGHT HALF BOTTOM: Non-Scrolling Dual Schedule Document Frames -->
+            <div class="doc-frame-wrapper bg-transparent overflow-hidden pointer-events-none">
+                <div class="sub-frame-container">
+                    <iframe 
+                        id="left-frame"
+                        scrolling="no"
+                        title="Embedded Google Document 1">
+                    </iframe>
+                </div>
+                <div class="sub-frame-container">
+                    <iframe 
+                        id="right-frame"
+                        scrolling="no"
+                        title="Embedded Google Document 2">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const bgImg = document.getElementById('bg-image');
+            const imgContainer = document.getElementById('image-container');
+            const viewportWrapper = document.getElementById('viewport-wrapper');
+            const leftFrame = document.getElementById('left-frame');
+            const rightFrame = document.getElementById('right-frame');
+            const mainTargetFrame = document.getElementById('main-target-frame');
+            const leftScrollContainer = document.getElementById('left-scroll-container');
+            const dayOfWeekEl = document.getElementById('day-of-week');
+            const formattedDateEl = document.getElementById('formatted-date');
+
+            const trackSelect = document.getElementById('track-select');
+            const idSelect = document.getElementById('id-select');
+            const btnScrollUp = document.getElementById('btn-scroll-up');
+            const btnScrollDown = document.getElementById('btn-scroll-down');
+            const btnExpand = document.getElementById('btn-expand');
+            const leftDocWrapper = document.getElementById('left-doc-wrapper');
+
+            // Right-side schedule frame URLs dictionary
+            const docConfig = {
+                "red1": { left: "https://docs.google.com/document/d/e/2PACX-1vQPgfp_QHRXqqKf3OeJtzqfTi2p7IqhhaOkZL1mzCybjlHbLimE0FfQpw0OhQAVUzEdcBF5yyAY8QGp/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vRyjOKWi47QF_RW5hV5GbYKMR5jR5FiRZblpKYg0EeaK8PTclvJmttGYj9AynIp2OZQV4yZZ1Ob6hNB/pub?embedded=true" },
+                "red2": { left: "https://docs.google.com/document/d/e/2PACX-1vS8Vhyfm1nG3NYtsJ-cN2fvy4oLzH73A_B8IiZUtR37sb5lo1MNz5aGd6-1-JNucIZ5hq4WFtU7rTrQ/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQ8ZhCN6Wf6yO5-uEHtVpVWTPMg0kCDEs6c7QiCzWHtK0YWxnhP50zq_Rt9jDzD7y6Re_evsRHcuNm4/pub?embedded=true" },
+                "red3": { left: "https://docs.google.com/document/d/e/2PACX-1vSImNvWFPls4C61UdOoxkjE860RgTPxq4EfvBhcDRmorwM8ZjTWNwewwk-1Se9gmmJGDpXZ5t-pbuJq/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vTt88ssmt65Bgoa3HxTntMBB58nQ8G9Mm2FFXz153lwtRwLp0pTNWlgfVr8Z8WhJ0QIngbHraH9Cgaf/pub?embedded=true" },
+                "red4": { left: "https://docs.google.com/document/d/e/2PACX-1vR9cnbP8kBMcyAvJuu1Immtb9i5vmWjNfkqu3OhikQQUMAaX5MFJuAL17E4AFNCT6wr1puQZw8d0nfd/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vRP8jTyKyNB88gyV5Cu4aDAmsQQ-2bFPqePHvCw0q2ErYPM73Zr9nG4XRHuebl1UTDY56-DN0EqQsEn/pub?embedded=true" },
+                "red5": { left: "https://docs.google.com/document/d/e/2PACX-1vTj1RVsxOFcWHOcoZjbJ_yDsRdP9aL3lcjIIJmWNZW7YYQ2MPtV5xo77jh3PI1MZL_xvHpJqF_J1vfV/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQe6rgAWVxq5KHniB5QQUIHCm6JnVMA2vbcVQLYMIOnKKZ5Sq96NxKLOq1US_oLrtU-Y97x8ZHaFgis/pub?embedded=true" },
+                
+                "blue1": { left: "https://docs.google.com/document/d/e/2PACX-1vQVd3NFOy8P_3N6qPRap5F9PwPJm_Ya1ZGl1yeGyVWZjBjau-sXnq2MsqRvBfb-FvgDQadeAyYkIHWv/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQpnCYi8h2SxeSFuX3T_1VRPBtHXA1C3nQl5UVIGn-78-PEZB2YpwNE5Qe7Z8iEZt92jIdSw_FRklIs/pub?embedded=true" },
+                "blue2": { left: "https://docs.google.com/document/d/e/2PACX-1vREYDM6YQ-A3nnKNyFQNT1tKBXy18Yxj1ohKOtOMVyCUOsKaMyHyP8WEifduSZaho9oWh8mADR-pQXP/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vT8t0Lb3HHOtkPUxwibkQ0f7rk5iotOJZhIAlhzUa8zpCPAzXP6iqC4AnDw8N3-UwdMqaRs4p3d6OU9/pub?embedded=true" },
+                "blue3": { left: "https://docs.google.com/document/d/e/2PACX-1vR2LS3cqiqK0IH29nC2333HM0Uo6MMBS-X20f0dQx_yurkoVK16SdIi8ix0H-ME5g-uEk7PHpVPlqI-/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vR8Gln1y4p2ttmL0DZWeznDVIWBD_VEvgFVlSAD9boUNogpcgVaqmrKA2eTZbF60pOUM4trny8C28pf/pub?embedded=true" },
+                "blue4": { left: "https://docs.google.com/document/d/e/2PACX-1vQLuD7ZRk2M-Ph90cDBcG76583do5Tt4FETjewYd29gGJcWmhKKkDODwrnDl7mP3azltmZ7nL2zcxkC/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vTv9YZJ-RshNGIWmX9n3M9yAgaNsr2ZIDLG5vhGqKtz4Cji24f_b0G1sFUDciLbJotDn2zGycS3jDqj/pub?embedded=true" },
+                "blue5": { left: "https://docs.google.com/document/d/e/2PACX-1vTj1RVsxOFcWHOcoZjbJ_yDsRdP9aL3lcjIIJmWNZW7YYQ2MPtV5xo77jh3PI1MZL_xvHpJqF_J1vfV/pub?embedded=true", right: "https://docs.google.com/document/d/e/2PACX-1vQe6rgAWVxq5KHniB5QQUIHCm6JnVMA2vbcVQLYMIOnKKZ5Sq96NxKLOq1US_oLrtU-Y97x8ZHaFgis/pub?embedded=true" }
+            };
+
+            // 30-Document Configuration Matrix (3 Tracks x 10 IDs)
+            const trackDocConfig = {
+                "orientation": {
+                    "red1": "https://docs.google.com/document/d/e/2PACX-1vSC675OmpHHKkfBvBYaAvJkH5FGL98Mno1efILC-_vQ1AO3spjdf2rBxyA9Okuwt5Rcsh2qtPJexPuI/pub?embedded=true",
+                    "red2": "https://docs.google.com/document/d/e/2PACX-1vRLqbYiHzJbVIXzMyzPBoJGT9rDKeuQqNRknndyGCxaE1L0Kw3WwqQuOZxC6xRx5Km9fGWHVBfErrBY/pub?embedded=true",
+                    "red3": "https://docs.google.com/document/d/e/2PACX-1vSjxIumY9Nb9wHYeusmvsxYSMGe46Vu05bCrDbVqi1DFLv9kuMru1SW32qhgtzFKWcea5usVh0TXI32/pub?embedded=true",
+                    "red4": "https://docs.google.com/document/d/e/2PACX-1vS6rUPWqdai5CIQ2fgarzSqHp07zpYWSV9S1BxcIsWu1wRrBvpG7gjSmrZsa1z-w8mwB2-eMrSuZirm/pub?embedded=true",
+                    "red5": "https://docs.google.com/document/d/e/2PACX-1vTj1RVsxOFcWHOcoZjbJ_yDsRdP9aL3lcjIIJmWNZW7YYQ2MPtV5xo77jh3PI1MZL_xvHpJqF_J1vfV/pub?embedded=true",
+                    "blue1": "https://docs.google.com/document/d/e/2PACX-1vRqTEGLPrhHketoaXb5lozUXThGNz23X6RL8ynX4JHAUAJGWi-8GVx0I3DrRuHK2AglV_8z27cETXoN/pub?embedded=true",
+                    "blue2": "https://docs.google.com/document/d/e/2PACX-1vTatNbws8bWzyX-R7lMc_6-1_8tIlXcl-6k2chyu21f9Zw5xLHQmxQdJlX0RvE3orahV_iEPK9Nxoeh/pub?embedded=true",
+                    "blue3": "https://docs.google.com/document/d/e/2PACX-1vQ7G-f8Ddrtz3yC2HrWf5A_dLKoPXyLMufDlIDXl6qAKAMJShjqI0gEM_xrj_I_uE-u5YH4oH17VkAP/pub?embedded=true",
+                    "blue4": "https://docs.google.com/document/d/e/2PACX-1vRh6Qz7tnE1Stt83SEs8nBgjkqL3Dl6pvVcvmRlb287BD0Oa_hGpqcXTKzBFj3edDX1eXmndM1kUOeC/pub?embedded=true",
+                    "blue5": "https://docs.google.com/document/d/e/2PACX-1vTj1RVsxOFcWHOcoZjbJ_yDsRdP9aL3lcjIIJmWNZW7YYQ2MPtV5xo77jh3PI1MZL_xvHpJqF_J1vfV/pub?embedded=true"
+                },
+                "india": {
+                    "red1": "https://docs.google.com/document/d/e/2PACX-1vS_mxBg8CMlh-Kl8sjFP0snrNOKqW4R6XuiTA7g1OICfcI5Hngg7ackMVPElbhI3RVb_S7AZm2UjUaV/pub?embedded=true",
+                    "red2": "https://docs.google.com/document/d/e/2PACX-1vSFbDh-xrS7cCcsl_Fo1m7Ev4J5T8DAaHl3gj_RyEpZzFJ1uyLVyCDw0h-mIsAUQhXY7k7_ZCqkj8k8/pub?embedded=true",
+                    "red3": "https://docs.google.com/document/d/e/2PACX-1vT7Oj9difHo5STQlKG4LpqOtNwYVB8zMXuBDUGKfEvF9sMNnRzjS-TsGVqh5aBMJduP-aAH8MzBN18b/pub?embedded=true",
+                    "red4": "https://docs.google.com/document/d/e/2PACX-1vTBs5GhHbLIuiMB-CRFerl4GaTowfUSTGQjNOeVqhIZG9DAuHiVaQJNyAUcSP-EFscYrSGm2Oin3DtL/pub?embedded=true",
+                    "red5": "https://docs.google.com/document/d/e/2PACX-1vQe6rgAWVxq5KHniB5QQUIHCm6JnVMA2vbcVQLYMIOnKKZ5Sq96NxKLOq1US_oLrtU-Y97x8ZHaFgis/pub?embedded=true",
+                    "blue1": "https://docs.google.com/document/d/e/2PACX-1vR87X8mEmh2n0L0fqVyGYoWQnujpTpj1O4u3X8QRFYBsXkc6rQrKgfg8qvCiZeYedEAaziCGGUibXD-/pub?embedded=true",
+                    "blue2": "https://docs.google.com/document/d/e/2PACX-1vTeAcWqn5k7UoaqElACXFxn6Jpjbvp7Lc9g01BF7L3nJWjELY1PBt4WRixp9u4Et2Br8SBISEtMsUTc/pub?embedded=true",
+                    "blue3": "https://docs.google.com/document/d/e/2PACX-1vSiqgPmmUo7PpozjrvsABA5K4Dp1V2FXZ6y-K3lJg9EKg6shR6G1FE7MVThvufCQDmZ0sKk1fpR2fEL/pub?embedded=true",
+                    "blue4": "https://docs.google.com/document/d/e/2PACX-1vRj4AZ7sHn10Idt8jseW8McBfWusBgOGvqIFZlO3lI7JqjD1SqAmPyalhNhC3CiChPZ5lv6ExpEcJUQ/pub?embedded=true",
+                    "blue5": "https://docs.google.com/document/d/e/2PACX-1vQe6rgAWVxq5KHniB5QQUIHCm6JnVMA2vbcVQLYMIOnKKZ5Sq96NxKLOq1US_oLrtU-Y97x8ZHaFgis/pub?embedded=true"
+                },
+                "tango": {
+                    "red1": "https://docs.google.com/document/d/e/2PACX-1vR6297eomPjTv7fIk2enlokE1N2wLu90t7HGS0q4jOVAXHbWJ5Aio-EVicCQB9la73slehQmVgKwWqY/pub?embedded=true",
+                    "red2": "https://docs.google.com/document/d/e/2PACX-1vQ8O97Jd-EZR73qdw5UAgTyEOHGzIniJnLhbPiMalBDxSI3VQPFR2G0BxMR8Gff0mzTOvA43FPUs8am/pub?embedded=true",
+                    "red3": "https://docs.google.com/document/d/e/2PACX-1vTSKwhWaXjC6UGE95WIHvgyK3lo2MJFctib5iF--1EGEtjCvl-TT7BLURIJC9aZmmr9fIAhs4vmY4DQ/pub?embedded=true",
+                    "red4": "https://docs.google.com/document/d/e/2PACX-1vSoYXmM8AQh4qG57DZW-FdEJme9imyW-K05Qv41uDKaCxHoaVm4n5h_gNwfUeuJBeav9PHZJZNz4YN8/pub?embedded=true",
+                    "red5": "https://docs.google.com/document/d/e/2PACX-1vTj1RVsxOFcWHOcoZjbJ_yDsRdP9aL3lcjIIJmWNZW7YYQ2MPtV5xo77jh3PI1MZL_xvHpJqF_J1vfV/pub?embedded=true",
+                    "blue1": "https://docs.google.com/document/d/e/2PACX-1vSHGRGxhAJT8H-4iaRp8JttYbSPP1GtsBXh7dXK7ukTnPdhjC6Q9bredFZ3ZWjdx6gJA5JJk0ITs0gM/pub?embedded=true",
+                    "blue2": "https://docs.google.com/document/d/e/2PACX-1vR7howZXkv0L-TC0p9d4aEZ4Xt9dn_Gv4yc4DofK9kyOabnWtGQaJfbXB0Sp5lzHQJGNZHqtXoXShHp/pub?embedded=true",
+                    "blue3": "https://docs.google.com/document/d/e/2PACX-1vQoN-pwNjoyL7Fv-GIBuK9GRMyuyc5TnLo3nFw0ZfMGGDw3TwWcGl9aB3-4joB4l6NxTosixmKr61l_/pub?embedded=true",
+                    "blue4": "https://docs.google.com/document/d/e/2PACX-1vSirXzPjrnXq0VHpL2Ci3RT-kz33PKxYPOxZtTFiuTAe5BPI2yY9_VUX8h1j3KTzV8Cy1JKfHeT42-A/pub?embedded=true",
+                    "blue5": "https://docs.google.com/document/d/e/2PACX-1vTj1RVsxOFcWHOcoZjbJ_yDsRdP9aL3lcjIIJmWNZW7YYQ2MPtV5xo77jh3PI1MZL_xvHpJqF_J1vfV/pub?embedded=true"
+                }
+            };
+
+            // Parse US Military Date format (e.g. 25 SEP 26 or 25-SEP-26)
+            function parseMilitaryDate(str) {
+                if (!str) return null;
+                const decoded = decodeURIComponent(str).trim();
+                const match = decoded.match(/^(\d{1,2})[\s\-]?([a-zA-Z]{3})[\s\-]?(\d{2}|\d{4})$/);
+                if (!match) return null;
+
+                const day = parseInt(match[1], 10);
+                const monthStr = match[2].toUpperCase();
+                let year = parseInt(match[3], 10);
+                if (year < 100) year += 2000;
+
+                const months = {
+                    "JAN": 0, "FEB": 1, "MAR": 2, "APR": 3, "MAY": 4, "JUN": 5,
+                    "JUL": 6, "AUG": 7, "SEP": 8, "OCT": 9, "NOV": 10, "DEC": 11
+                };
+
+                if (!(monthStr in months)) return null;
+                const monthIndex = months[monthStr];
+
+                const dateObj = new Date(year, monthIndex, day);
+                if (isNaN(dateObj.getTime())) return null;
+
+                const dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                const formattedDate = `${String(day).padStart(2, '0')} ${monthStr} ${String(year).slice(-2)}`;
+
+                return {
+                    dayOfWeek: dayOfWeek,
+                    dateStr: formattedDate
+                };
+            }
+
+            function getTodayMilitaryStr() {
+                const today = new Date();
+                const day = String(today.getDate()).padStart(2, '0');
+                const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                const month = months[today.getMonth()];
+                const year = String(today.getFullYear()).slice(-2);
+                return `${day} ${month} ${year}`;
+            }
+
+            // Parse Query Parameters
+            const params = new URLSearchParams(window.location.search);
+
+            // 1. Determine Page ID / Week (red1..blue5)
+            let pageId = "red2"; // Fallback default
+            if (params.has("id") && docConfig[params.get("id")]) {
+                pageId = params.get("id");
+            } else if (params.has("week") && docConfig[params.get("week")]) {
+                pageId = params.get("week");
+            } else {
+                for (const key of Object.keys(docConfig)) {
+                    if (params.has(key)) {
+                        pageId = key;
+                        break;
+                    }
+                }
+            }
+
+            // 2. Determine FLT Track (orientation, india, tango)
+            let currentTrack = "orientation";
+            if (params.has("flt") && trackDocConfig[params.get("flt").toLowerCase()]) {
+                currentTrack = params.get("flt").toLowerCase();
+            } else if (params.has("track") && trackDocConfig[params.get("track").toLowerCase()]) {
+                currentTrack = params.get("track").toLowerCase();
+            } else if (params.has("orientation")) {
+                currentTrack = "orientation";
+            } else if (params.has("india")) {
+                currentTrack = "india";
+            } else if (params.has("tango")) {
+                currentTrack = "tango";
+            }
+
+            // Synchronize Select Controls
+            trackSelect.value = currentTrack;
+            idSelect.value = pageId;
+
+            // Update Left Target Frame Source
+            function updateMainTargetDoc() {
+                const track = trackSelect.value;
+                const id = idSelect.value;
+                let targetUrl = "https://docs.google.com/document/d/e/2PACX-1vQPgfp_QHRXqqKf3OeJtzqfTi2p7IqhhaOkZL1mzCybjlHbLimE0FfQpw0OhQAVUzEdcBF5yyAY8QGp/pub?embedded=true";
+
+                if (trackDocConfig[track] && trackDocConfig[track][id]) {
+                    targetUrl = trackDocConfig[track][id];
+                }
+
+                mainTargetFrame.src = targetUrl;
+            }
+
+            trackSelect.addEventListener('change', updateMainTargetDoc);
+            idSelect.addEventListener('change', updateMainTargetDoc);
+
+            // Widget Scroll Controls
+            btnScrollUp.addEventListener('click', () => {
+                leftScrollContainer.scrollBy({ top: -250, behavior: 'smooth' });
+            });
+            btnScrollDown.addEventListener('click', () => {
+                leftScrollContainer.scrollBy({ top: 250, behavior: 'smooth' });
+            });
+
+            // Widget Expand / Revert Fullscreen Toggle (92%)
+            btnExpand.addEventListener('click', () => {
+                const isExpanded = leftDocWrapper.classList.toggle('is-expanded');
+                if (isExpanded) {
+                    btnExpand.textContent = '⤡';
+                    btnExpand.title = 'Revert to Normal View';
+                } else {
+                    btnExpand.textContent = '⤢';
+                    btnExpand.title = 'Expand View (92%)';
+                }
+            });
+
+            // Parse Date String Parameter
+            const datestrParam = params.get("datestr");
+            const dateData = parseMilitaryDate(datestrParam) || parseMilitaryDate(getTodayMilitaryStr());
+
+            if (dateData) {
+                dayOfWeekEl.textContent = dateData.dayOfWeek;
+                formattedDateEl.textContent = dateData.dateStr;
+            }
+
+            // Apply dynamic sources
+            bgImg.src = `https://johnk-cap.github.io/web-aids/${pageId}.jpg`;
+            leftFrame.src = docConfig[pageId].left;
+            rightFrame.src = docConfig[pageId].right;
+            updateMainTargetDoc();
+
+            let naturalWidth = 0;
+            let naturalHeight = 0;
+
+            function isMobileDevice() {
+                const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+                const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+                const isTouchMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0) && (window.innerWidth <= 1024 || window.innerHeight <= 1024);
+                return mobileRegex.test(userAgent) || isTouchMobile;
+            }
+
+            const isMobile = isMobileDevice();
+
+            if (isMobile) {
+                viewportWrapper.classList.add('is-mobile-rotated');
+            }
+
+            function updateLayout() {
+                if (!naturalWidth || !naturalHeight) return;
+
+                let vw = window.innerWidth;
+                let vh = window.innerHeight;
+
+                if (isMobile) {
+                    vw = window.innerHeight;
+                    vh = window.innerWidth;
+                }
+
+                const imgAspect = naturalWidth / naturalHeight;
+                const screenAspect = vw / vh;
+
+                let renderedW, renderedH;
+
+                if (screenAspect > imgAspect) {
+                    renderedH = vh;
+                    renderedW = vh * imgAspect;
+                } else {
+                    renderedW = vw;
+                    renderedH = vw / imgAspect;
+                }
+
+                imgContainer.style.width = Math.floor(renderedW) + 'px';
+                imgContainer.style.height = Math.floor(renderedH) + 'px';
+            }
+
+            function onImageLoad() {
+                naturalWidth = bgImg.naturalWidth || 1920;
+                naturalHeight = bgImg.naturalHeight || 1080;
+                updateLayout();
+                
+                viewportWrapper.classList.add('loaded');
+            }
+
+            if (bgImg.complete && bgImg.naturalWidth) {
+                onImageLoad();
+            } else {
+                bgImg.addEventListener('load', onImageLoad);
+            }
+
+            window.addEventListener('resize', updateLayout);
+            window.addEventListener('orientationchange', updateLayout);
+        })();
+    </script>
+</body>
+</html>
